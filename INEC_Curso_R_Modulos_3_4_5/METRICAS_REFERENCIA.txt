@@ -1,0 +1,8 @@
+registros: 1500
+variables: 27
+edad_ausencia: 66
+edad_formato: 6
+ingreso_ausencia: 51
+ingreso_formato: 3
+id_repeticiones_adicionales: 20
+filas_duplicadas: 4
