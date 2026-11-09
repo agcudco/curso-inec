@@ -339,3 +339,40 @@ reglas_ejemplo <- tibble::tribble(
 )
 print(reglas_ejemplo)
 
+
+# ^ es inicio, $ es fin, [0-9] es un dígito, {5} implica cinco veces.
+patron_id <- "^P[0-9]{5}$"
+patron_periodo <- "^[0-9]{4}-[0-9]{2}$"
+patron_fecha <- "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+
+# Comprobar ejemplos controlados antes de evaluar 1.500 filas.
+grepl(patron_id, c("P00001", "P999", "00001", "P12345"))
+grepl(patron_periodo, c("2026-10", "2026/10"))
+
+
+# Reglas seleccionadas de ejemplo; el archivo R/04_validacion_automatica.R
+# completa el conjunto con dominios, duplicados y categorías.
+datos_validados_ejemplo <- datos_perfilados %>%
+  mutate(
+    fecha_parseada = as.Date(fecha_levantamiento, format = "%Y-%m-%d"),
+    error_id_ausente = es_ausente(id_persona),
+    error_id_formato = !es_ausente(id_persona) &
+      !grepl("^P[0-9]{5}$", id_persona),
+    error_edad_ausente = es_ausente(edad),
+    error_edad_rango = !is.na(edad_num) &
+      (edad_num < 0 | edad_num > 110 | edad_num != floor(edad_num)),
+    error_fecha_formato = !es_ausente(fecha_levantamiento) &
+      (!grepl("^[0-9]{4}-[0-9]{2}-[0-9]{2}$", fecha_levantamiento) |
+         is.na(fecha_parseada))
+  )
+
+# ¿Cuántas filas incumplen cada condición? Cuentan filas, no personas únicas.
+datos_validados_ejemplo %>%
+  summarise(
+    id_ausente = sum(error_id_ausente),
+    edad_ausente = sum(error_edad_ausente),
+    edad_fuera_rango = sum(error_edad_rango),
+    fecha_mal_formada = sum(error_fecha_formato)
+  )
+
+
