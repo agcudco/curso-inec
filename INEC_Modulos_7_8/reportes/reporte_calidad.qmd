@@ -1,0 +1,185 @@
+---
+title: "Informe técnico de calidad de archivos estadísticos"
+subtitle: "Ejercicio educativo | INEC | R y Quarto"
+author: "Capacitación técnica en calidad de datos"
+date: today
+date-format: "DD/MM/YYYY"
+lang: es
+format:
+  html:
+    toc: true
+    number-sections: true
+    embed-resources: true
+  docx:
+    toc: true
+    number-sections: true
+execute:
+  echo: false
+  warning: false
+  message: false
+params:
+  periodo: "2026-10"
+---
+
+```{r}
+#| label: preparar-entrada
+#| include: false
+# Este bloque es el arranque reproducible: no depende del Environment de RStudio.
+library(here)
+library(dplyr)
+library(readr)
+library(knitr)
+library(ggplot2)
+
+ruta <- here::here("resultados", "02_analisis_modulo_7.rds")
+if (!file.exists(ruta)) {
+  stop("Falta el RDS de módulo 7. Ejecute R/07_01_tablas_calidad.R")
+}
+a <- readRDS(ruta)
+periodos_validos <- a$periodos$periodo_referencia[a$periodos$formato_aaaa_mm]
+if (length(periodos_validos) != 1L || !identical(periodos_validos[[1]], params$periodo)) {
+  stop("El parámetro de período no coincide con el período válido del dataset. No publicar etiquetas incorrectas.")
+}
+carpeta_graficos <- here::here("resultados", "figuras")
+graficos <- c("07_indicadores_escenarios.png", "07_alertas_por_regla.png",
+              "07_ausencias_campos.png")
+if (!all(file.exists(file.path(carpeta_graficos, graficos)))) {
+  stop("Faltan figuras: ejecute R/07_02_graficos_calidad.R")
+}
+```
+
+# Resumen ejecutivo
+
+Este informe es una **simulación académica** de control de calidad de archivos estadísticos. El período de referencia declarado es **`r params$periodo`** y el conjunto contiene **`r format(a$metadata$n_registros, big.mark = ".")` registros**. El documento compara **datos originales** con una **propuesta de normalización pendiente de autorización**, no dos levantamientos oficiales.
+
+Se registraron **`r a$cobertura_alertas$total[1]` eventos de alerta** en los controles seleccionados de consistencia e integridad, que involucraron a **`r a$cobertura_alertas$total[2]` filas diferentes** (`r a$metadata$porcentaje_filas_alertadas` % del archivo). Una misma fila puede activar más de una regla, por lo que no se deben equiparar eventos y personas afectadas.
+
+# Procedencia y alcance
+
+- Archivo fuente: `personas_encuesta_sintetica_2026_10.csv`.
+- Unidad de análisis: registro de persona en un archivo ficticio.
+- Reglas: controles didácticos de completitud, validez, unicidad e integridad.
+- Estado de la versión comparativa: **propuesta no autorizada**.
+- Denominadores: explícitos para cada indicador; no promediar porcentajes con bases diferentes.
+
+## Inspección del período declarado
+
+```{r}
+#| label: tabla-periodos
+knitr::kable(a$periodos, caption = "Valores encontrados en periodo_referencia")
+```
+
+Los textos que no cumplen el patrón `AAAA-MM` se presentan como problemas de formato; por ejemplo, `2026/10` no representa un período estadístico adicional.
+
+# Indicadores de calidad
+
+## Tabla comparativa de indicadores
+
+```{r}
+#| label: tabla-indicadores
+indicadores_para_reporte <- a$indicadores_ancho |>
+  dplyr::transmute(
+    Indicador = indicador,
+    `Numerador original` = numerador_Original,
+    `Denominador original` = denominador_Original,
+    `Original (%)` = porcentaje_Original,
+    `Propuesta (%)` = porcentaje_Propuesta,
+    `Variación (pp)` = round(variacion_pp, 2)
+  )
+knitr::kable(indicadores_para_reporte,
+             caption = "Indicadores: línea base y escenario de normalización")
+```
+
+**Cómo leer la variación:** los puntos porcentuales (pp) corresponden a la resta entre dos porcentajes. Una mejora de 2 pp no equivale necesariamente a una mejora relativa de 2 %. La normalización de una etiqueta puede mejorar la validez de dominio sin alterar la completitud o la unicidad.
+
+## Visualización comparativa
+
+```{r}
+#| label: grafico-indicadores
+#| fig-cap: "Indicadores de calidad en dos escenarios didácticos"
+#| out-width: "100%"
+knitr::include_graphics(file.path(carpeta_graficos, "07_indicadores_escenarios.png"))
+```
+
+# Resumen estadístico exploratorio
+
+En esta sección se resumen edad e ingreso. Los cálculos utilizan únicamente observaciones interpretables que cumplen los criterios didácticos de cada variable; las ausencias, valores no convertibles y fuera de dominio se informan separadamente. Los valores altos de ingreso se conservan para el análisis y no se consideran automáticamente erróneos.
+
+```{r}
+#| label: tabla-estadisticos
+knitr::kable(a$resumen_numericos,
+             caption = "Descriptivos: media, mediana, cuartiles y registros no evaluables")
+```
+
+La diferencia entre media y mediana puede reflejar una distribución asimétrica. Esta tabla sirve para priorizar revisión, no para imputar sin autorización.
+
+# Incidencias y alertas
+
+## Alertas por regla
+
+```{r}
+#| label: tabla-alertas
+knitr::kable(a$incidencias,
+             caption = "Conteos de eventos de alerta por origen, regla y severidad")
+```
+
+```{r}
+#| label: grafico-alertas
+#| fig-cap: "Eventos de alerta por regla; varias reglas pueden afectar una fila"
+#| out-width: "100%"
+knitr::include_graphics(file.path(carpeta_graficos, "07_alertas_por_regla.png"))
+```
+
+La clasificación `REVISAR` es una etiqueta didáctica, no una decisión técnica definitiva. Antes de utilizar un hallazgo como error confirmado debe verificarse la documentación metodológica y, cuando corresponda, el catálogo de referencia.
+
+## Ausencias en campos requeridos
+
+```{r}
+#| label: tabla-ausencias
+knitr::kable(a$faltantes,
+             caption = "Ausencias sobre campos requeridos del ejercicio")
+```
+
+```{r}
+#| label: grafico-ausencias
+#| fig-cap: "Valores ausentes por campo, sin imputación automática"
+#| out-width: "100%"
+knitr::include_graphics(file.path(carpeta_graficos, "07_ausencias_campos.png"))
+```
+
+# Trazabilidad de propuestas de modificación
+
+```{r}
+#| label: tabla-bitacora
+knitr::kable(a$bitacora_resumen,
+             caption = "Resumen de cambios propuestos, por variable y estado")
+```
+
+La propuesta se conserva como un escenario separado. No se presenta como una base corregida ni se modifican los registros de origen.
+
+# Interpretación técnica y conclusiones
+
+```{r}
+#| label: conclusiones
+#| results: asis
+comp <- a$indicadores_ancho
+for (i in seq_len(nrow(comp))) {
+  cambio <- comp$variacion_pp[i]
+  estado <- if (is.na(cambio)) "no comparable" else if (cambio > 0) "aumentó" else if (cambio < 0) "disminuyó" else "no cambió"
+  cifra <- if (is.na(cambio)) "NA" else format(abs(cambio), nsmall = 2, decimal.mark = ",")
+  cat(paste0("- **", comp$indicador[i], "**: ", estado,
+             " (variación absoluta: ", cifra, " pp).\n"))
+}
+```
+
+Las variaciones calculadas describen el escenario propuesto, pero **no validan por sí mismas** que una intervención sea correcta. Las diferencias entre archivos o períodos posteriores requieren verificar comparabilidad de población, procedimientos, codificaciones, reglas y denominadores.
+
+# Recomendaciones de aseguramiento
+
+1. Conservar los CSV originales y la versión del diccionario de datos.
+2. Revisar con el área responsable las reglas y categorías detectadas.
+3. Mantener la bitácora de propuestas y documentar autorizaciones reales antes de corregir.
+4. Reejecutar el proceso al recibir un nuevo archivo y comparar solamente indicadores metodológicamente equivalentes.
+5. Verificar las cifras y gráficos en HTML y Word antes de compartir el informe.
+
+*Material educativo desarrollado con datos sintéticos. No constituye una publicación estadística oficial del INEC.*

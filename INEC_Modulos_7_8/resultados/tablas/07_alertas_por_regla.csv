@@ -1,0 +1,6 @@
+origen,regla_id,severidad,incidencias
+Consistencia lógica,L5-02,REVISAR,6
+Consistencia lógica,L5-03,REVISAR,8
+Integridad,I5-01,REVISAR,14
+Integridad,I5-02,REVISAR,18
+Integridad,I5-03,REVISAR,40

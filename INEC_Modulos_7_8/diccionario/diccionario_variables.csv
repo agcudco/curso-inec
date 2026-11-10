@@ -1,0 +1,28 @@
+variable,descripcion,tipo_esperado,formato_esperado,dominio_referencia,obligatoria,control_exploratorio
+id_persona,Identificador sintético de persona,texto,P + 5 dígitos,No vacío; clave nominal a revisar,Sí,Obligatoriedad / unicidad
+id_hogar,Identificador sintético de hogar,texto,H + 5 dígitos,No vacío en registros aplicables,Sí,Ausencia / formato
+codigo_muestra,Código sintético de muestra,texto,M + 3 dígitos,Catálogo didáctico,Sí,Estructura / categoría
+periodo_referencia,Mes de referencia del registro,texto,AAAA-MM,2026-10 (escenario),Sí,Formato
+provincia,Provincia declarada,texto,Categoría,Catálogo de provincias del ejercicio,Sí,Dominio / codificación
+canton,Cantón declarado,texto,Categoría,Relación con provincia por revisar,Sí,Categorías / consistencia
+area,Área de residencia,texto,Categoría,Urbana / Rural,Sí,Dominio
+sector_censal,Código de sector sintético,texto,S + 4 dígitos,Código de demostración,Sí,Formato
+fecha_levantamiento,Fecha de levantamiento del caso,fecha,AAAA-MM-DD,Octubre 2026 (escenario),Sí,Tipo / formato
+encuestador,Código sintético de encuestador,texto,E + 3 dígitos,Código de demostración,Sí,Formato
+sexo,"Categoría registrada de sexo, ficticia",texto,Categoría,Hombre / Mujer (solo base simulada),Sí,Categorías / ausencias
+edad,Edad declarada en años cumplidos,entero,Número entero,"0–110 solo ilustrativo, no política INEC",Sí,Tipo / rango exploratorio
+estado_civil,Estado civil declarado,texto,Categoría,Catálogo del ejercicio,No,Categorías
+nivel_instruccion,Máximo nivel de instrucción,texto,Categoría,Catálogo del ejercicio,No,Categorías
+asiste_clases,Asistencia actual a clases,texto,Sí / No,Catálogo del ejercicio,No,Dominio
+anios_escolaridad,Años acumulados de escolaridad,entero,Número entero,0–24 de demostración,No,Tipo / extremos
+condicion_actividad,Situación laboral declarada,texto,Categoría,Ocupado / Desocupado / Inactivo,No,Categorías / consistencia posterior
+actividad_principal,Actividad principal declarada,texto,Categoría,Catálogo del ejercicio,No,Categorías
+horas_trabajo_semana,Horas semanales trabajadas,entero,Número entero,Interpretar según condición de actividad,No,Tipo / extremos
+ingreso_mensual_usd,Ingreso mensual ficticio en dólares de Estados Unidos; no incluye separadores de miles,decimal,"USD; punto decimal, exactamente dos posiciones (0.00), NA para ausencia",Valores mayores o iguales a 0; negativos y extremos requieren revisión metodológica,No,Regex formato; NA vs cero; negativos; extremos; estadísticos robustos
+personas_hogar,Tamaño declarado de hogar,entero,Número entero,Revisar valores 0 y extremos,Sí,Tipo / extremos
+habitaciones_hogar,Número declarado de habitaciones,entero,Número entero,Revisar extremos,No,Tipo / extremos
+tipo_vivienda,Tipo declarado de vivienda,texto,Categoría,Casa / Departamento / Cuarto / Otra,No,Categorías
+acceso_agua,Acceso declarado a agua,texto,Sí / No,Catálogo del ejercicio,No,Categorías
+acceso_internet,Acceso declarado a internet,texto,Sí / No,Catálogo del ejercicio,No,Categorías
+peso_muestral,Peso ficticio para ejemplo,decimal,Punto decimal,No representa peso real de encuesta,No,Tipo / ausencias
+observaciones,Campo libre para observaciones,texto,Texto libre,"Puede estar vacío, es opcional",No,Vacios informativos

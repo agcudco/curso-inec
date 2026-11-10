@@ -1,0 +1,3 @@
+periodo_referencia,filas,formato_aaaa_mm,interpretacion
+2026-10,1492,TRUE,Formato esperado
+2026/10,8,FALSE,Revisar formato
