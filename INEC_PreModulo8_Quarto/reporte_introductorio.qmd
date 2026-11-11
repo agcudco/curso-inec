@@ -1,0 +1,191 @@
+---
+title: "Mi primer reporte de calidad de datos"
+subtitle: "Práctica introductoria a Quarto · Curso INEC"
+author: "Participante del curso"
+date: today
+lang: es
+format:
+  html:
+    toc: true
+    number-sections: true
+    embed-resources: true
+  docx:
+    toc: true
+    number-sections: true
+execute:
+  echo: true
+  warning: false
+  message: false
+---
+
+## Introducción
+
+Este informe presenta una **exploración descriptiva inicial** de un conjunto de
+**datos sintéticos** de personas y hogares. No contiene información oficial del
+INEC. Su finalidad es aprender a escribir un documento reproducible en Quarto.
+
+## Objetivos
+
+- Leer un CSV sin cambiar automáticamente los identificadores.
+- Calcular indicadores sencillos de calidad de datos.
+- Presentar una tabla y un gráfico creados desde R.
+- Interpretar los resultados y reconocer sus limitaciones.
+
+## Metodología
+
+Se utiliza `data_raw/personas_encuesta_sintetica_2026_10.csv`. El archivo se lee
+como texto para conservar códigos y para separar la importación de la conversión
+de variables numéricas. Las cifras del informe se calculan al generar el reporte.
+
+### Preparación y lectura
+
+```{r}
+#| label: lectura-datos
+# Cargar bibliotecas una vez al inicio del informe.
+library(readr)
+library(dplyr)
+library(ggplot2)
+library(knitr)
+
+# La ruta es relativa a la carpeta donde se guarda este .qmd.
+ruta_csv <- "data_raw/personas_encuesta_sintetica_2026_10.csv"
+
+# Detener la ejecución con un mensaje claro si falta el archivo.
+if (!file.exists(ruta_csv)) {
+  stop("No se encuentra el CSV. Revise la carpeta data_raw/.")
+}
+
+# Leer las 27 columnas como texto: no se pierden ceros iniciales en los IDs.
+datos <- read_csv(
+  ruta_csv,
+  col_types = cols(.default = col_character()),
+  na = "NA",
+  trim_ws = FALSE,
+  show_col_types = FALSE
+)
+
+# Crear una COPIA de trabajo con dos columnas numéricas nuevas.
+# suppressWarnings evita mensajes por textos que no pueden convertirse;
+# esas conversiones quedan como NA y deben analizarse posteriormente.
+datos_trabajo <- datos %>%
+  mutate(
+    edad_n = suppressWarnings(as.numeric(trimws(edad))),
+    ingreso_n = suppressWarnings(as.numeric(trimws(ingreso_mensual_usd)))
+  )
+```
+
+## Resultados
+
+### 1. Resumen general del archivo
+
+El conjunto contiene **`r nrow(datos)` registros** y **`r ncol(datos)` variables
+originales**. Los dos campos numéricos derivados (`edad_n` e `ingreso_n`) solo
+existen en `datos_trabajo` y no modifican el CSV.
+
+```{r}
+#| label: tabla-resumen
+# Crear indicadores sencillos. La columna 'Valor' es numérica.
+resumen <- tibble::tibble(
+  Indicador = c("Registros", "Variables originales", "Edad ausente o no interpretable",
+                "Ingresos iguales a cero"),
+  Valor = c(
+    nrow(datos),
+    ncol(datos),
+    sum(is.na(datos_trabajo$edad_n)),
+    sum(datos_trabajo$ingreso_n == 0, na.rm = TRUE)
+  )
+)
+
+# Convertir la tabla en una presentación apta para HTML y Word.
+knitr::kable(resumen, caption = "Indicadores descriptivos del CSV")
+```
+
+**Interpretación:** una edad que no puede convertirse a número se contabiliza aquí
+junto con las ausencias; para distinguir los motivos se necesitaría una revisión
+más específica, como la realizada en el módulo 3.
+
+### 2. Tabla de frecuencias de condición de actividad
+
+```{r}
+#| label: tabla-actividad
+# Contar personas por categoría y calcular el porcentaje del total.
+tabla_actividad <- datos_trabajo %>%
+  count(condicion_actividad, name = "registros", sort = TRUE) %>%
+  mutate(porcentaje = round(100 * registros / sum(registros), 1))
+
+knitr::kable(tabla_actividad, caption = "Frecuencia de condición de actividad")
+```
+
+### 3. Gráfico de frecuencias
+
+```{r}
+#| label: grafico-actividad
+#| fig-cap: "Número de registros por condición de actividad"
+#| fig-width: 8
+#| fig-height: 4.5
+# geom_col() dibuja las barras usando los conteos ya calculados.
+ggplot(tabla_actividad,
+       aes(x = condicion_actividad, y = registros)) +
+  geom_col(fill = "#246B9C") +
+  geom_text(aes(label = registros), hjust = -0.15, size = 3.5) +
+  coord_flip() +
+  labs(x = "Condición de actividad", y = "Registros") +
+  expand_limits(y = max(tabla_actividad$registros) * 1.12) +
+  theme_minimal()
+```
+
+### 4. Media y mediana de ingreso mensual
+
+Para el ejercicio se usan solo ingresos numéricos **no negativos**. Un cero puede
+ser un valor válido; no equivale a un dato ausente. Un valor muy alto puede afectar
+la media, pero no necesariamente invalida el dato.
+
+```{r}
+#| label: ingresos
+# Seleccionar ingresos informados y no negativos sin tocar el origen.
+ingresos_validos <- datos_trabajo$ingreso_n[
+  !is.na(datos_trabajo$ingreso_n) & datos_trabajo$ingreso_n >= 0
+]
+
+if (length(ingresos_validos) == 0) {
+  stop("No existen ingresos numéricos no negativos para el resumen")
+}
+
+estadisticos_ingreso <- tibble::tibble(
+  Estadistico = c("Media", "Mediana"),
+  USD = round(c(mean(ingresos_validos), median(ingresos_validos)), 2)
+)
+knitr::kable(estadisticos_ingreso,
+             caption = "Resumen descriptivo de ingreso mensual (USD)")
+```
+
+## Interpretación y discusión
+
+La tabla y el gráfico permiten comparar la frecuencia de las condiciones de
+actividad. La media y la mediana del ingreso pueden ser distintas porque responden
+de manera diferente a los valores extremos y a la presencia de ceros.
+
+**Actividad del participante:** complete este apartado con dos observaciones
+concretas que se desprendan de las tablas y del gráfico generados. Evite afirmar
+que las diferencias representan cambios reales en la población.
+
+## Conclusiones
+
+1. Quarto permite reunir texto, cálculos, tablas y gráficos en un mismo documento.
+2. Los resultados cambian automáticamente cuando se vuelve a generar el informe
+   utilizando otro CSV compatible.
+3. Un reporte descriptivo no sustituye los controles de validación, consistencia
+   y aprobación de los módulos 4, 5 y 6.
+
+## Limitaciones y recomendaciones
+
+- Los datos son sintéticos, con anomalías introducidas para la capacitación.
+- La conversión de texto a número puede producir `NA`; requiere diagnóstico.
+- No se realizaron correcciones ni imputaciones en el archivo original.
+- Antes de usar un reporte institucional se deben verificar reglas y metodología.
+
+## Referencias
+
+- Quarto. [Tutorial introductorio en RStudio](https://quarto.org/docs/get-started/hello/rstudio.html).
+- Quarto. [Trabajo con R](https://quarto.org/docs/computations/r.html).
+- Curso INEC (material didáctico, noviembre de 2026): *Evaluación de archivos de datos y automatización de reportes de calidad en R*.

@@ -25,6 +25,9 @@ archivos <- c(
   here::here("resultados", "02_analisis_modulo_7.rds"),
   here::here("reportes", "reporte_calidad.qmd")
 )
+
+
+
 print(data.frame(archivo = archivos, existe = file.exists(archivos)))
 if (!all(file.exists(archivos))) {
   stop("Faltan archivos. Ejecute 06_99 y 07_01; revise el QMD.")

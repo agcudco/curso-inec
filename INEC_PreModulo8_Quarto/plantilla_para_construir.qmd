@@ -1,0 +1,46 @@
+---
+title: "Mi primer reporte de calidad de datos"
+subtitle: "Práctica previa al módulo 8"
+author: "Escriba aquí su nombre"
+format: html
+lang: es
+---
+
+## Introducción
+
+Escriba aquí un párrafo sobre el objetivo del informe y el origen sintético de los datos.
+
+## Objetivos
+
+- Objetivo 1.
+- Objetivo 2.
+
+## Metodología
+
+Explique qué archivo CSV usará y cómo importará sus datos.
+
+## Resultados
+
+### Resumen general
+
+Agregue aquí su primer bloque de R: cargar `readr` y `dplyr`, leer el CSV y contar registros.
+
+### Tabla de frecuencias
+
+Agregue un bloque para usar `count()` y `knitr::kable()`.
+
+### Gráfico
+
+Agregue otro bloque con `ggplot2` y `geom_col()`.
+
+## Interpretación de los resultados
+
+Describa dos hallazgos observados.
+
+## Conclusiones
+
+Escriba dos conclusiones y una limitación.
+
+## Referencias
+
+- Quarto: https://quarto.org/docs/get-started/hello/rstudio.html
