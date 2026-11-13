@@ -1,0 +1,125 @@
+---
+title: "Informe técnico de calidad de datos"
+subtitle: "Encuesta socioeconómica sintética 2026 — práctica integradora"
+author: "Participante del curso"
+lang: es
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    code-fold: true
+    theme: cosmo
+  docx:
+    toc: true
+execute:
+  echo: false
+  warning: false
+  message: false
+---
+
+```{r}
+#| label: setup
+library(here)
+library(dplyr)
+library(knitr)
+ruta_rds <- here::here('resultados', '07_paquete_reporte.rds')
+if (!file.exists(ruta_rds)) stop('Primero genere el RDS en la etapa 7')
+informe <- readRDS(ruta_rds)
+```
+
+## 1. Introducción
+
+Este informe presenta resultados de un **conjunto completamente sintético** para practicar la evaluación de archivos de datos. No contiene cifras reales del INEC y su distribución muestral fue desbalanceada deliberadamente.
+
+## 2. Objetivos
+
+- Identificar ausencias, formatos no válidos y relaciones incoherentes.
+- Mostrar indicadores con numeradores y denominadores verificables.
+- Comparar los períodos octubre y noviembre de 2026 y escenarios original/propuesta.
+- Documentar limitaciones antes de difundir resultados.
+
+## 3. Metodología y procedencia
+
+El conjunto contiene `r informe$metadatos$filas_original` registros de encuestas. Los controles se construyeron en scripts R independientes y se consolidaron en un archivo **RDS**. La etiqueta *pobreza didáctica* corresponde únicamente al umbral ilustrativo de USD `r informe$metadatos$umbral_pobreza_solo_didactico` por persona y mes. **No constituye una medición oficial.**
+
+La propuesta de normalización permanece en estado: **`r informe$metadatos$estado_correcciones`**.
+
+## 4. Indicadores de calidad
+
+```{r}
+#| label: tabla-indicadores
+knitr::kable(informe$tablas$indicadores,
+             caption='Indicadores por escenario (cifras del taller)')
+```
+
+```{r}
+#| label: figura-indicadores
+#| fig-cap: "Comparación descriptiva de indicadores."
+knitr::include_graphics(here::here('resultados','figuras','06_indicadores.png'))
+```
+
+## 5. Comparación entre períodos
+
+```{r}
+#| label: tabla-periodos
+knitr::kable(informe$tablas$indicadores_periodo,
+             caption='Indicadores por período; mismas reglas y definiciones')
+```
+
+## 6. Educación y zonas
+
+```{r}
+#| label: figura-educacion
+#| fig-cap: "Distribución educativa por período y zona, en registros."
+knitr::include_graphics(here::here('resultados','figuras','06_educacion.png'))
+```
+
+## 7. Ingresos y pobreza didáctica
+
+```{r}
+#| label: tabla-ingresos
+knitr::kable(informe$tablas$resumen_ingresos,
+             digits=2, caption='Media y mediana de ingresos monetarios válidos')
+```
+
+```{r}
+#| label: figura-ingresos
+#| fig-cap: "Distribución de ingresos. La vista está acercada a 0–3.000 USD."
+knitr::include_graphics(here::here('resultados','figuras','06_ingresos.png'))
+```
+
+```{r}
+#| label: figura-pobreza
+#| fig-cap: "Clasificación con umbral educativo; no es índice de pobreza oficial."
+knitr::include_graphics(here::here('resultados','figuras','06_pobreza.png'))
+```
+
+## 8. Alertas y propuestas de normalización
+
+```{r}
+#| label: tabla-alertas
+knitr::kable(head(informe$tablas$resumen_alertas, 15),
+             caption='Quince reglas con mayor frecuencia de alertas')
+```
+
+```{r}
+#| label: figura-alertas
+#| fig-cap: "Una persona puede tener más de una incidencia."
+knitr::include_graphics(here::here('resultados','figuras','06_alertas.png'))
+```
+
+Se registraron `r nrow(informe$bitacora)` propuestas de normalización, **no autorizadas**. La imputación estadística se examinó únicamente como escenario didáctico y no altera la base original.
+
+## 9. Interpretación y limitaciones
+
+La composición educativa y territorial del conjunto fue creada de forma desbalanceada; los resultados representan **solo esta simulación**. Las diferencias entre períodos no pueden interpretarse como tendencias poblacionales, ni los cambios entre escenario original/propuesta como mejoras oficiales sin validar su metodología y aprobación.
+
+## 10. Conclusiones
+
+El proceso de importación, perfilado, validación, integración y tabulación permitió producir resultados reproducibles. Antes de comunicar estos resultados, se deben inspeccionar las reglas, los denominadores, las incidencias y la bitácora de decisiones.
+
+## 11. Referencias y documentación
+
+- [R for Data Science (2e)](https://r4ds.hadley.nz/)
+- [Quarto — Getting Started](https://quarto.org/docs/get-started/)
+- [Quarto — MS Word](https://quarto.org/docs/output-formats/ms-word.html)

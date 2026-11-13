@@ -1,0 +1,28 @@
+---
+title: "Metodología y limitaciones"
+---
+
+## Origen
+
+Datos **100 % sintéticos** preparados para una práctica de R y Quarto. No son resultados del INEC. Cada archivo incluye octubre y noviembre de 2026; las diferencias no representan tendencias de población.
+
+## Unidades y relaciones
+
+La unidad principal es una respuesta de encuesta (`id_encuesta`). La persona (`id_persona`) y el hogar (`id_hogar`) son identificadores distintos. Para vincular encuestas y hogares se utiliza **`id_hogar` junto con `periodo_referencia`**.
+
+## Criterios de calidad
+
+- **Completitud:** campos presentes entre los campos obligatorios definidos en el taller.
+- **Validez:** pruebas aplicables que cumplen reglas de formato, dominio y rangos didácticos.
+- **Unicidad:** proporción de claves de persona presentes que no participan en una repetición dentro de su período.
+- **Consistencia:** relaciones evaluadas de actividad/horas y fecha/período que cumplen reglas.
+
+El numerador y el denominador de cada indicador aparecen en las tablas técnicas. Una persona puede tener más de una alerta. Una ausencia no se debe transformar automáticamente en un dato inventado.
+
+## Pobreza didáctica
+
+Se presenta una clasificación **ficticia y simplificada**: ingreso mensual total del hogar dividido para el número de miembros; se clasifica como "Pobre" si el resultado es menor que **USD 185 por persona/mes**. Este umbral **no es oficial**, no ajusta por equivalencias, necesidades, diseño muestral ni método institucional. No utilizar para decisiones socioeconómicas reales.
+
+## Calidad, aprobación y publicación
+
+Las propuestas de normalización no representan correcciones autorizadas. La distribución educativa y territorial está desbalanceada intencionalmente. Los porcentajes no permiten inferir estimadores nacionales ni interpretar diferencias como causales.

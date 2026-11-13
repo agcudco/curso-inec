@@ -1,0 +1,28 @@
+{
+  "registros": 2400,
+  "hogares": 800,
+  "columnas": 24,
+  "urbana": 1947,
+  "rural": 442,
+  "ceros": 39,
+  "ausentes_ingresos": 24,
+  "negativos": 7,
+  "formatos_ingresos_invalidos": 8,
+  "dup_filas": 36,
+  "referencias_hogar_huerfanas": 10,
+  "pobreza_didactica": {
+    "Pobre": 470,
+    "No pobre": 1930
+  },
+  "educacion": {
+    "Secundaria": 1166,
+    "Primaria": 318,
+    "Sin instruccion": 61,
+    "Superior": 726,
+    "Posgrado": 101,
+    "NA": 10,
+    "SUPERIOR": 5,
+    "Secundaria ": 5,
+    "99": 8
+  }
+}

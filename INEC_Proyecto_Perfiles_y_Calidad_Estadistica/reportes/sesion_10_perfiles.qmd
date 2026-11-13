@@ -1,0 +1,120 @@
+---
+title: "Sesión 10 | Identificación de patrones y perfiles"
+subtitle: "Encuesta socioeconómica sintética — ejercicio exploratorio en R"
+author: "Participante de la capacitación"
+lang: es
+format:
+  html:
+    toc: true
+    code-fold: true
+    embed-resources: true
+  docx:
+    toc: true
+execute:
+  echo: false
+  warning: false
+  message: false
+---
+
+```{r}
+#| label: cargar-resultados
+# 1. El QMD solo LEE el RDS generado por el script 10_01.
+# 2. No requiere objetos previos abiertos en la consola de RStudio.
+if (!requireNamespace("here", quietly = TRUE) ||
+    !requireNamespace("knitr", quietly = TRUE)) {
+  stop("Instale here y knitr antes de renderizar")
+}
+ruta <- here::here("resultados", "10_perfiles.rds")
+if (!file.exists(ruta)) stop("Falta resultados/10_perfiles.rds. Ejecute los scripts 10_00 y 10_01")
+paquete <- readRDS(ruta)
+```
+
+## 1. Introducción
+
+Este informe describe agrupaciones **exploratorias** de registros sintéticos según edad e ingreso mensual. El método K-means busca semejanzas matemáticas; **no calcula pobreza oficial ni representa perfiles poblacionales de Ecuador**. El archivo de entrada contiene inconsistencias creadas para enseñar control de calidad.
+
+## 2. Objetivo
+
+Caracterizar tres grupos de observaciones mediante variables numéricas previamente verificadas, y describir sus distribuciones por zona y educación.
+
+## 3. Metodología
+
+Se seleccionaron registros con edad de **18 a 110 años** e ingreso mensual numérico **mayor o igual a cero**, exclusivamente como criterios docentes. Para reducir la asimetría del ingreso se aplicó `log1p()` y después se estandarizaron edad e ingreso transformado con `scale()`. Se ejecutó `kmeans()` con **k = 3**, semilla 2026 y 25 inicializaciones.
+
+**Advertencia:** excluir observaciones de un análisis no implica borrarlas del CSV ni corregirlas; quedan documentadas.
+
+```{r}
+#| label: tbl-cobertura
+knitr::kable(paquete$diagnostico,
+             caption = "Registros disponibles y excluidos del agrupamiento")
+```
+
+## 4. Resumen de perfiles
+
+```{r}
+#| label: tbl-perfiles
+knitr::kable(paquete$tablas$perfiles,
+             caption = "Características descriptivas de cada grupo",
+             digits = 1)
+```
+
+Los números de los grupos no establecen jerarquías. La media puede verse afectada por ingresos elevados; la mediana ofrece una referencia más robusta.
+
+## 5. Distribución de edad e ingresos
+
+```{r}
+#| label: fig-perfiles
+#| fig-cap: "Distribución por edad e ingreso; cada punto corresponde a un registro sintético."
+#| out-width: "100%"
+knitr::include_graphics(here::here("resultados", "figuras", "10_perfiles.png"))
+```
+
+## 6. Composición por zona y educación
+
+```{r}
+#| label: tbl-zonas
+knitr::kable(paquete$tablas$zonas,
+             caption = "Composición de los grupos por zona")
+```
+
+```{r}
+#| label: fig-educacion
+#| fig-cap: "Distribución porcentual de educación en cada grupo."
+#| out-width: "100%"
+knitr::include_graphics(here::here("resultados", "figuras", "10_educacion_por_grupo.png"))
+```
+
+## 7. Interpretación y conclusiones
+
+```{r}
+#| label: comentarios-automaticos-perfiles
+#| results: asis
+# Comentar resultados a partir de las tablas, sin escribir cifras manuales.
+p <- paquete$tablas$perfiles
+mas_numeroso <- p[which.max(p$personas), ]
+mayor_mediana <- p[which.max(p$ingreso_mediano), ]
+cat(sprintf("- El grupo con más observaciones es **%s**, con **%s registros**.\n",
+            mas_numeroso$grupo, mas_numeroso$personas))
+cat(sprintf("- La mayor mediana de ingreso corresponde a **%s** (USD %.2f).\n",
+            mayor_mediana$grupo, mayor_mediana$ingreso_mediano))
+cat(sprintf("- El análisis incluyó **%s de %s registros**; las exclusiones se documentaron en la metodología.\n",
+            paquete$metadatos$observaciones,
+            paquete$diagnostico$registros_totales))
+```
+
+**Reflexión del participante:** redacte tres observaciones adicionales verificables: una sobre la edad, una sobre el ingreso mediano y otra sobre la composición educativa o territorial. Indique siempre el número de registros de cada grupo y las exclusiones registradas.
+
+**Preguntas:** ¿Qué grupo tiene el ingreso mediano más alto? ¿Es también el de mayor edad promedio? ¿Qué cambia si se comparan medias en lugar de medianas?
+
+## 8. Limitaciones
+
+La muestra es desbalanceada y ficticia. El valor de `k` se eligió por motivos pedagógicos, no por optimización formal. La agrupación depende de variables, transformaciones y escala; no prueba relaciones causales ni autoriza decisiones sobre personas.
+
+## 9. Evidencias de reproducibilidad
+
+```{r}
+#| label: tbl-procedencia
+cat("Fecha de generación: ", paquete$metadatos$fecha, "\n\n")
+cat("Registros analizados: ", paquete$metadatos$observaciones, "\n\n")
+cat("Cantidad de grupos: ", paquete$metadatos$centros, "\n")
+```

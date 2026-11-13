@@ -1,0 +1,144 @@
+---
+title: "Sesión 11 | Estadística de calidad de los perfiles"
+subtitle: "Completitud, dispersión y observaciones atípicas — encuesta sintética"
+author: "Participante de la capacitación"
+lang: es
+format:
+  html:
+    toc: true
+    code-fold: true
+    embed-resources: true
+  docx:
+    toc: true
+execute:
+  echo: false
+  warning: false
+  message: false
+---
+
+```{r}
+#| label: cargar-rds
+# Quarto NO depende de los objetos abiertos en el Environment.
+if (!requireNamespace("here", quietly = TRUE) ||
+    !requireNamespace("knitr", quietly = TRUE)) {
+  stop("Instale here y knitr antes de renderizar el reporte")
+}
+ruta <- here::here("resultados", "11_calidad_perfiles.rds")
+if (!file.exists(ruta)) stop("Falta 11_calidad_perfiles.rds. Ejecute 11_00 y 11_01")
+paquete <- readRDS(ruta)
+```
+
+## 1. Introducción
+
+Este documento evalúa **la calidad de la información y la variabilidad estadística** de los tres grupos exploratorios identificados en la sesión 10. Los datos corresponden a una encuesta ficticia. Los números de grupo no son etiquetas oficiales de pobreza ni un juicio sobre las personas.
+
+## 2. Objetivos
+
+- Comparar tamaños de grupo y medidas de tendencia central y dispersión.
+- Revisar la completitud de tres variables complementarias.
+- Identificar ingresos que merecen revisión estadística mediante límites basados en cuartiles.
+- Comunicar los resultados sin modificar el archivo original.
+
+## 3. Metodología y población analizada
+
+Se conservaron **exactamente los grupos de K-means calculados en la sesión 10**. Las edades e ingresos utilizados para agrupar ya superaron los filtros didácticos de esa sesión; por tanto, su completitud dentro de los grupos no mide la completitud del archivo original. Para evaluar calidad por grupo se revisan `zona_norm`, `educacion_norm` y `acceso_norm`.
+
+```{r}
+#| label: tbl-cobertura
+knitr::kable(paquete$cobertura,
+             caption = "Cobertura del agrupamiento respecto del archivo original")
+```
+
+## 4. Tamaño y composición de los perfiles
+
+```{r}
+#| label: tbl-tamanos
+knitr::kable(paquete$tablas$tamanos,
+             caption = "Tamaño y participación porcentual de cada grupo")
+```
+
+```{r}
+#| label: fig-tamanos
+#| fig-cap: "Número de registros agrupados por perfil."
+#| out-width: "100%"
+knitr::include_graphics(here::here("resultados", "figuras",
+                                   "11_cantidad_por_perfil.png"))
+```
+
+## 5. Estadística descriptiva por perfil
+
+La **media** suma los valores y divide para el total; la **mediana** es el valor central. La **desviación estándar** resume dispersión; el **IQR** es la distancia entre Q3 y Q1 y describe la mitad central de los datos.
+
+```{r}
+#| label: tbl-estadisticas
+knitr::kable(paquete$tablas$estadisticas,
+             caption = "Medidas de edad e ingreso para cada grupo", digits = 2)
+```
+
+```{r}
+#| label: fig-cajas
+#| fig-cap: "Diagrama de cajas del ingreso por grupo. Los puntos aislados requieren revisión."
+#| out-width: "100%"
+knitr::include_graphics(here::here("resultados", "figuras",
+                                   "11_caja_ingreso_por_perfil.png"))
+```
+
+## 6. Completitud de información complementaria
+
+Una celda presente no necesariamente es válida. Aquí la completitud se calcula por campo y grupo: `(número de valores presentes / número de registros del grupo) × 100`.
+
+```{r}
+#| label: tbl-completitud
+knitr::kable(paquete$tablas$completitud,
+             caption = "Completitud por grupo de zona, educación y acceso a internet")
+```
+
+```{r}
+#| label: fig-completitud
+#| fig-cap: "Porcentaje de valores presentes en tres variables complementarias."
+#| out-width: "100%"
+knitr::include_graphics(here::here("resultados", "figuras",
+                                   "11_completitud_por_perfil.png"))
+```
+
+## 7. Candidatos a valores atípicos
+
+Para cada grupo, se calculan Q1 y Q3. Se marcan ingresos fuera de los límites `Q1 - 1,5 × IQR` y `Q3 + 1,5 × IQR`; el límite inferior se acota a cero por ser una variable monetaria no negativa en la muestra analizada. **Un candidato atípico no es automáticamente un error y no debe eliminarse sin justificación.**
+
+```{r}
+#| label: tbl-atipicos
+knitr::kable(paquete$tablas$atipicos,
+             caption = "Candidatos atípicos de ingreso, por perfil")
+```
+
+## 8. Interpretación y conclusiones
+
+```{r}
+#| label: conclusiones-automaticas
+#| results: asis
+p <- paquete$tablas$estadisticas
+m <- p[which.max(p$ingreso_mediana), ]
+d <- p[which.max(p$ingreso_iqr), ]
+cat(sprintf("- **%s** tiene la mediana de ingreso más alta (USD %.2f).\n",
+            as.character(m$grupo), m$ingreso_mediana))
+cat(sprintf("- **%s** presenta el mayor IQR de ingresos (USD %.2f), es decir, mayor dispersión en la mitad central.\n",
+            as.character(d$grupo), d$ingreso_iqr))
+cat(sprintf("- Los grupos incluyen **%s registros** y excluyen **%s** según los filtros previos.\n",
+            paquete$cobertura$filas_agrupadas, paquete$cobertura$filas_excluidas))
+```
+
+**Actividad del estudiante:** redacte una conclusión adicional sobre la completitud de educación y una sobre la diferencia entre promedio y mediana de ingresos. Aclare si un valor atípico identificado requiere investigación o una corrección demostrada.
+
+## 9. Limitaciones y trazabilidad
+
+- El archivo de origen es sintético y desbalanceado; no sirve para inferencia nacional.
+- La agrupación es exploratoria, con tres grupos definidos didácticamente.
+- No se asignan grupos a los registros excluidos; por ello las tasas por perfil se refieren a los agrupados.
+- Los candidatos a valores atípicos no constituyen incidencias confirmadas.
+- Los indicadores son descriptivos, no prueban causalidad.
+
+```{r}
+#| label: procedencia
+cat("Fecha del cálculo:", paquete$metadatos$fecha, "\n")
+cat("Registros descritos:", paquete$metadatos$observaciones, "\n")
+```

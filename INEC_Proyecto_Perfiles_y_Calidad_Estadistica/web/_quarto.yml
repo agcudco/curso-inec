@@ -1,0 +1,20 @@
+project:
+  type: website
+  output-dir: _site
+website:
+  title: "Encuesta socioeconómica — Taller"
+  navbar:
+    left:
+      - href: index.qmd
+        text: Inicio
+      - href: metodologia.qmd
+        text: Metodología
+format:
+  html:
+    theme: cosmo
+    toc: true
+lang: es
+execute:
+  echo: false
+  warning: false
+  message: false

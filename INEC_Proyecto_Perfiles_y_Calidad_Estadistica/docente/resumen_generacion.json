@@ -1,0 +1,38 @@
+{
+  "meta": {
+    "datos": "SINTETICOS / NO INEC",
+    "semilla": 426112,
+    "filas_personas": 2400,
+    "filas_hogares": 800,
+    "periodos": [
+      "2026-10",
+      "2026-11"
+    ],
+    "umbral_pobreza_ficticio_usd_por_persona_mes": 185,
+    "definicion": "pobreza_didactica= Pobre si ingreso_hogar_mensual_usd/miembros_hogar <185; No pobre en caso contrario. No es indicador oficial.",
+    "anotacion": "Muestra desbalanceada deliberadamente: no representativa ni comparable causalmente. Incoherencias incluidas para el taller."
+  },
+  "conteos": {
+    "zona_Urbana": 1947,
+    "educacion_Secundaria": 1166,
+    "pobreza_Pobre": 470,
+    "educacion_Primaria": 318,
+    "zona_Rural": 442,
+    "pobreza_No pobre": 1930,
+    "educacion_Sin instruccion": 61,
+    "educacion_Superior": 726,
+    "educacion_Posgrado": 101,
+    "educacion_NA": 10,
+    "ingreso_cero": 39,
+    "ingreso_formato_invalido": 8,
+    "educacion_SUPERIOR": 5,
+    "ingreso_negativo": 7,
+    "educacion_Secundaria ": 5,
+    "educacion_99": 8,
+    "ingreso_NA": 24,
+    "zona_Rural ": 4,
+    "zona_URBANA": 4,
+    "zona_99": 3
+  },
+  "anomalias_inyectadas": 210
+}

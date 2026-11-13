@@ -1,0 +1,1063 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Guía INEC — Sesiones 10 y 11</title><style>body{font:16px/1.7 system-ui,-apple-system,"Segoe UI",sans-serif;background:#f5f8fb;color:#1a2939;margin:0}main{max-width:990px;margin:28px auto;padding:40px 56px;background:#fff;box-shadow:0 12px 40px #1b33511c;border-radius:14px}h1,h2,h3{line-height:1.25;color:#10476e;scroll-margin-top:15px}h1{font-size:2em;border-bottom:3px solid #2780a9;padding-bottom:13px}h2{margin-top:34px;padding-top:8px;border-top:1px solid #e2eaf0}h3{margin-top:25px}pre{background:#122d44;color:#eaf4ff;padding:16px;border-radius:8px;overflow-x:auto;font-size:13px;line-height:1.55}pre code{color:inherit}code{font-size:.92em;background:#eef4f8;padding:2px 4px;border-radius:3px}pre code{padding:0;background:transparent}table{width:100%;border-collapse:collapse;margin:14px 0;font-size:14px}th{background:#dcebf5;text-align:left}th,td{padding:9px;border:1px solid #d8e3eb;vertical-align:top}blockquote{border-left:4px solid #2582ae;background:#f0f7fb;padding:10px 17px;margin:12px 0}a{color:#136a9d}@media(max-width:650px){main{margin:0;padding:18px 16px;border-radius:0}}</style></head><body><main><h1>Guía de estudio desde cero: sesiones 10 y 11 (versión actualizada)</h1>
+<p><strong>Curso:</strong> Evaluación de archivos de datos y automatización de reportes de calidad en R.<br />
+<strong>Duración:</strong> dos sesiones de 2 horas.<br />
+<strong>Nivel:</strong> básico predominante, desde nivel cero hasta nivel intermedio.<br />
+<strong>Caso:</strong> encuesta socioeconómica <strong>sintética</strong> con 2.400 registros, 24 variables y períodos de octubre y noviembre de 2026.<br />
+<strong>Método:</strong> escribir cada bloque, comprenderlo, generar RDS y elaborar un reporte Quarto por sesión.</p>
+<blockquote>
+<p>Los datos, perfiles y reglas son ejercicios didácticos. No representan estadísticas oficiales del INEC ni producen clasificaciones institucionales.</p>
+</blockquote>
+<h2>¿Qué cambia en esta versión?</h2>
+<p>La sesión <strong>10 se conserva íntegra</strong>: preparación, K-means, descripción de tres grupos y reporte <code>sesion_10_perfiles.qmd</code>. La sesión <strong>11</strong> ya no incluye clasificación ni árboles de decisión. Se centra en <strong>estadística descriptiva y evaluación de calidad de los perfiles de la sesión 10</strong>.</p>
+<table>
+<thead>
+<tr>
+  <th>Sesión</th>
+  <th>Pregunta que responde</th>
+  <th>Entregables</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>10. Identificación de perfiles</td>
+  <td>¿Qué registros tienen edades e ingresos similares?</td>
+  <td><code>10_perfiles.rds</code>, dos gráficos, reporte HTML y Word</td>
+</tr>
+<tr>
+  <td>11. Estadística de calidad de perfiles</td>
+  <td>¿Cómo se diferencian los grupos y cuán completa es la información que los describe?</td>
+  <td><code>11_calidad_perfiles.rds</code>, tablas, tres gráficos, reporte HTML y Word</td>
+</tr>
+</tbody>
+</table>
+<h2>Antes de empezar: palabras y símbolos para principiantes</h2>
+<table>
+<thead>
+<tr>
+  <th>Término</th>
+  <th>Definición sencilla</th>
+  <th>Ejemplo</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td><strong>Fila o registro</strong></td>
+  <td>Una encuesta completa representada como línea de una tabla.</td>
+  <td>Respuestas de una persona</td>
+</tr>
+<tr>
+  <td><strong>Columna o variable</strong></td>
+  <td>Una característica medida para cada registro.</td>
+  <td><code>edad</code>, <code>zona</code>, <code>nivel_educacion</code></td>
+</tr>
+<tr>
+  <td><strong>CSV</strong></td>
+  <td>Archivo de texto con una tabla.</td>
+  <td><code>encuesta_socioeconomica_2026.csv</code></td>
+</tr>
+<tr>
+  <td><strong>Script <code>.R</code></strong></td>
+  <td>Instrucciones guardadas en un archivo, que R ejecuta en orden.</td>
+  <td><code>11_01_estadistica_calidad_perfiles.R</code></td>
+</tr>
+<tr>
+  <td><strong>Objeto</strong></td>
+  <td>Resultado que R guarda asociado con un nombre.</td>
+  <td><code>datos</code>, <code>tabla</code>, <code>resumen</code></td>
+</tr>
+<tr>
+  <td><strong>Función</strong></td>
+  <td>Operación preparada para realizar una tarea.</td>
+  <td><code>mean()</code> obtiene el promedio</td>
+</tr>
+<tr>
+  <td><strong>Argumento</strong></td>
+  <td>Información que le entregamos a una función.</td>
+  <td><code>mean(x, na.rm=TRUE)</code></td>
+</tr>
+<tr>
+  <td><strong>Paquete</strong></td>
+  <td>Colección de funciones que se instala para ampliar R.</td>
+  <td><code>dplyr</code>, <code>ggplot2</code></td>
+</tr>
+<tr>
+  <td><strong>NA</strong></td>
+  <td>Dato no disponible o ausente.</td>
+  <td>No equivale a cero</td>
+</tr>
+<tr>
+  <td><strong>RDS</strong></td>
+  <td>Archivo que conserva los objetos de R para abrirlos después.</td>
+  <td><code>10_perfiles.rds</code></td>
+</tr>
+<tr>
+  <td><strong>QMD / Quarto</strong></td>
+  <td>Documento que reúne explicación, tablas, gráficos y código.</td>
+  <td><code>sesion_11_calidad_perfiles.qmd</code></td>
+</tr>
+</tbody>
+</table>
+<pre><code class="language-r"># Guardar tres edades en un objeto
+edades &lt;- c(22, 28, 34)
+# Obtener la media aritmética
+mean(edades)  # Resultado: 28
+</code></pre>
+<p><code>&lt;-</code> significa «guardar en»; <code>$</code> selecciona una columna (<code>datos$edad</code>); <code>%&gt;%</code> pasa el resultado a la siguiente operación; <code>==</code> compara igualdad; <code>&amp;</code> significa «y»; <code>|</code> significa «o». <code>#</code> sirve para escribir comentarios explicativos que R ignora al ejecutar.</p>
+<h2>Preparación del proyecto</h2>
+<ol>
+<li>Abra <code>encuesta_calidad.Rproj</code> en RStudio. No abra los scripts sin el proyecto.</li>
+<li>Instale, solo si faltan, <code>here</code>, <code>readr</code>, <code>dplyr</code>, <code>ggplot2</code> y <code>knitr</code>.</li>
+<li>Compruebe el archivo <code>data_raw/encuesta_socioeconomica_2026.csv</code>.</li>
+<li>Cree resultados al ejecutar <code>00_configuracion.R</code>; nunca reemplace el CSV original.</li>
+<li>Para generar HTML y Word, instale además Quarto CLI. El botón <em>Render</em> y la Terminal trabajan con Quarto; una instrucción de Terminal como <code>quarto render</code> no puede escribirse directamente en Console de R.</li>
+</ol>
+<pre><code class="language-r">install.packages(c(&quot;here&quot;, &quot;readr&quot;, &quot;dplyr&quot;, &quot;ggplot2&quot;, &quot;knitr&quot;))
+library(here)
+file.exists(here::here(&quot;data_raw&quot;, &quot;encuesta_socioeconomica_2026.csv&quot;))
+</code></pre>
+<p><strong>Resultado esperado de la última línea:</strong> <code>TRUE</code>. Si aparece <code>FALSE</code>, verifique que abrió el <code>.Rproj</code> correcto y que la carpeta <code>data_raw/</code> contiene el CSV.</p>
+<hr />
+<h1>SESIÓN 10 — Identificación de patrones y perfiles</h1>
+<p><strong>Pregunta de partida:</strong> ¿podemos reunir las respuestas de personas con edades e ingresos similares para describir sus características?</p>
+<p><strong>Objetivo general:</strong> aprender a identificar grupos exploratorios de registros y describirlos con tablas y gráficos, sin asignarles etiquetas oficiales.</p>
+<p><strong>Plan sugerido de 120 minutos:</strong> conceptos (20), preparación y revisión de datos (25), agrupamiento y gráficos (45), reporte Quarto (25), revisión final (5).</p>
+<h2>10.1. Conceptos antes de escribir código</h2>
+<table>
+<thead>
+<tr>
+  <th>Concepto</th>
+  <th>Explicación para principiantes</th>
+  <th>Ejemplo sencillo</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td><strong>Patrón</strong></td>
+  <td>Algo que aparece repetidamente.</td>
+  <td>Varias personas tienen edades e ingresos parecidos.</td>
+</tr>
+<tr>
+  <td><strong>Perfil</strong></td>
+  <td>Resumen de las características comunes de un grupo.</td>
+  <td>«Grupo con edad mediana de X e ingreso mediano de Y».</td>
+</tr>
+<tr>
+  <td><strong>Agrupamiento</strong></td>
+  <td>Reunir observaciones semejantes sin decir previamente qué grupo corresponde a cada una.</td>
+  <td>Unir registros cercanos en edad e ingreso.</td>
+</tr>
+<tr>
+  <td><strong>Distancia</strong></td>
+  <td>Forma matemática de medir qué tan diferentes son dos registros.</td>
+  <td>Edades 24 y 25 están más cerca que 24 y 60.</td>
+</tr>
+<tr>
+  <td><strong>K-means</strong></td>
+  <td>Algoritmo que forma <code>k</code> grupos alrededor de centros y busca reducir las distancias dentro de cada grupo.</td>
+  <td>Elegimos <code>k = 3</code> para aprender; no porque existan exactamente tres tipos de personas.</td>
+</tr>
+<tr>
+  <td><strong>Centroide</strong></td>
+  <td>Punto promedio que representa el centro de un grupo, calculado en las variables usadas.</td>
+  <td>Centro en edad e ingreso transformado, no una persona real.</td>
+</tr>
+<tr>
+  <td><strong>Estandarizar</strong></td>
+  <td>Poner variables con unidades diferentes en una escala comparable.</td>
+  <td>Edad en años e ingreso en dólares dejan de competir por magnitud.</td>
+</tr>
+<tr>
+  <td><strong>Transformación logarítmica</strong></td>
+  <td>Cambiar la escala para que diferencias enormes entre ingresos pesen menos en el análisis.</td>
+  <td><code>log1p(0) = 0</code>; los ingresos grandes se comprimen.</td>
+</tr>
+<tr>
+  <td><strong>Media</strong></td>
+  <td>Suma de valores dividida por cantidad de valores.</td>
+  <td>Ingresos 100, 200, 900 → media 400.</td>
+</tr>
+<tr>
+  <td><strong>Mediana</strong></td>
+  <td>Valor central después de ordenar.</td>
+  <td>Ingresos 100, 200, 900 → mediana 200.</td>
+</tr>
+<tr>
+  <td><strong>Dato atípico</strong></td>
+  <td>Valor inusual respecto de los demás.</td>
+  <td>Un ingreso mucho mayor que el resto; no necesariamente un error.</td>
+</tr>
+</tbody>
+</table>
+<h3>Un ejemplo sin computadora</h3>
+<p>Considere cinco edades: <code>20</code>, <code>22</code>, <code>24</code>, <code>61</code>, <code>64</code>. Visualmente aparecen dos conjuntos cercanos. K-means hace algo parecido, pero utiliza las <strong>variables numéricas seleccionadas</strong>, compara distancias y actualiza los centros hasta estabilizar las asignaciones.</p>
+<p><strong>Importante:</strong> los grupos <code>1</code>, <code>2</code> y <code>3</code> son etiquetas arbitrarias. «Grupo 1» no significa «mayor pobreza», «mejor educación» ni «grupo prioritario». Para describirlos debemos mirar sus estadísticas reales.</p>
+<h3>¿Por qué necesitamos preparar los datos?</h3>
+<p>Imagine que una persona tiene <code>ingreso_mensual_usd = &quot;USD 410&quot;</code>. No es un número directo para R. Otra podría tener <code>-125.00</code> debido a una anomalía introducida para el taller. Antes de calcular distancias hay que documentar cómo tratamos esos casos, sin convertirlos silenciosamente en ingresos válidos.</p>
+<h2>10.2. Archivo previo: <code>R/00_configuracion.R</code></h2>
+<p>Este archivo pertenece al taller original. <strong>Funciona como una caja de herramientas compartida</strong>: carga paquetes, prepara las carpetas y define funciones que después utilizan otros scripts. No produce los grupos; permite que los demás archivos trabajen de forma consistente.</p>
+<h3>Fragmento A. Cargar herramientas y crear carpetas</h3>
+<pre><code class="language-r"># ETAPA 0 — Configuración, conceptos y funciones comunes.
+# Objetivo: preparar rutas y ayudas que se reutilizan sin modificar los CSV.
+# Una sola vez, si faltan paquetes:
+# install.packages(c('here','readr','dplyr','tidyr','ggplot2','knitr'))
+suppressPackageStartupMessages({
+  library(here)
+  library(readr)
+  library(dplyr)
+  library(ggplot2)
+})
+
+for (carpeta in c('resultados', 'resultados/tablas', 'resultados/figuras')) {
+  dir.create(here::here(carpeta), recursive = TRUE, showWarnings = FALSE)
+}
+</code></pre>
+<p><strong>Lea el código así:</strong> <code>library(here)</code> hace que R pueda usar sus rutas; <code>library(dplyr)</code> ofrece herramientas para filtrar y resumir; el <code>for</code> repite la creación de carpetas para cada ruta indicada. <code>recursive = TRUE</code> permite crear carpetas internas; <code>showWarnings = FALSE</code> evita mensajes si ya existen. <code>suppressPackageStartupMessages()</code> oculta mensajes de bienvenida, no oculta errores de ejecución.</p>
+<p><strong>Comprobación:</strong> examine el panel <strong>Files</strong>: deben existir <code>resultados/</code>, <code>resultados/tablas/</code> y <code>resultados/figuras/</code>.</p>
+<h3>Fragmento B. Leer archivos CSV sin perder identificadores</h3>
+<pre><code class="language-r"># Los identificadores y las categorías se importan inicialmente como texto.
+leer_texto &lt;- function(ruta) {
+  if (!file.exists(ruta)) stop('Archivo no encontrado: ', ruta)
+  readr::read_csv(ruta,
+                  col_types = readr::cols(.default = readr::col_character()),
+                  na = 'NA', trim_ws = FALSE, show_col_types = FALSE)
+}
+</code></pre>
+<p><strong>Concepto:</strong> leer como texto evita que un identificador o código, por ejemplo <code>000123</code>, pierda sus ceros iniciales. <code>function(ruta)</code> define una herramienta propia que recibe una ruta; <code>if</code> comprueba que exista; <code>stop()</code> detiene el proceso si falta. <code>read_csv()</code> importa el archivo; <code>col_character()</code> indica «leer inicialmente como texto»; <code>na = &quot;NA&quot;</code> identifica ese marcador de ausencia; <code>trim_ws = FALSE</code> conserva espacios para poder auditarlos.</p>
+<p><strong>Para probarla:</strong> <code>leer_texto(here::here(&quot;data_raw&quot;, &quot;encuesta_socioeconomica_2026.csv&quot;))</code> devolverá una tabla con los valores todavía en texto.</p>
+<h3>Fragmento C. Distinguir ausencias y convertir columnas auxiliares</h3>
+<pre><code class="language-r"># NA, blanco y los marcadores didácticos son ausencia; cero NO es ausencia.
+normalizar_ausencia &lt;- function(x) {
+  y &lt;- trimws(as.character(x))
+  y[!is.na(y) &amp; toupper(y) %in% c('', 'NA', 'N/D', 'SIN DATO')] &lt;- NA_character_
+  y
+}
+
+# Convierte texto a número solo en una columna DERIVADA; no toca la fuente.
+a_numero &lt;- function(x) suppressWarnings(as.numeric(normalizar_ausencia(x)))
+</code></pre>
+<ul>
+<li><code>normalizar_ausencia(x)</code> toma los valores, quita espacios exteriores con <code>trimws()</code> y considera ausencias a <code>&quot;&quot;</code>, <code>&quot;NA&quot;</code>, <code>&quot;N/D&quot;</code>, <code>&quot;SIN DATO&quot;</code>.</li>
+<li><code>toupper()</code> sirve para comparar textos sin depender de mayúsculas/minúsculas.</li>
+<li><code>NA_character_</code> significa «valor ausente de tipo texto».</li>
+<li><code>a_numero(x)</code> primero normaliza ausencias y después convierte a número con <code>as.numeric()</code>; <code>suppressWarnings()</code> evita mensajes por caracteres no interpretables. <strong>Ese caso debe detectarse durante la validación</strong>, no tratarse automáticamente como correcto.</li>
+<li>La conversión se aplicará a nuevas columnas como <code>edad_n</code>, <strong>no al CSV de origen</strong>.</li>
+</ul>
+<p><strong>Prueba simple:</strong> <code>a_numero(c(&quot;100&quot;, &quot;0&quot;, &quot;NA&quot;, &quot;USD 410&quot;))</code> devuelve <code>100</code>, <code>0</code>, <code>NA</code>, <code>NA</code>. Observe que <strong>cero no se transforma en ausencia</strong>.</p>
+<h3>Fragmento D. Función común de alertas (reutilizable, no central en estas sesiones)</h3>
+<pre><code class="language-r"># Para registrar alertas, los índices se calculan ANTES de crear el tibble.
+# Así se evita el conflicto de nombres con una columna llamada 'variable'.
+crear_alerta &lt;- function(tabla, condicion, regla_id, columna_origen,
+                        descripcion, severidad = 'REVISAR') {
+  if (!columna_origen %in% names(tabla)) stop('No existe: ', columna_origen)
+  if (length(condicion) != nrow(tabla)) stop('Condición con longitud incorrecta')
+  idx &lt;- which(!is.na(condicion) &amp; condicion)
+  valores &lt;- as.character(tabla[[columna_origen]][idx])
+  tibble::tibble(
+    fila_csv = tabla$fila_csv[idx],
+    id_encuesta = tabla$id_encuesta[idx],
+    id_persona = tabla$id_persona[idx],
+    periodo_referencia = tabla$periodo_referencia[idx],
+    regla_id = rep(regla_id, length(idx)),
+    variable = rep(columna_origen, length(idx)),
+    valor_observado = valores,
+    severidad = rep(severidad, length(idx)),
+    descripcion = rep(descripcion, length(idx))
+  )
+}
+
+message('Etapa 0: configuración disponible. Trabaje en el proyecto .Rproj.')
+</code></pre>
+<p><code>crear_alerta()</code> transforma una condición lógica por registro en una tabla de incidencias. <code>which()</code> localiza las filas donde se cumple la condición; <code>length()</code> cuenta los índices; <code>tabla[[columna_origen]]</code> obtiene la columna cuyo nombre se recibió como argumento; <code>tibble()</code> arma la tabla final. Los valores se extraen <strong>antes</strong> de crear una columna llamada <code>variable</code>, para evitar el conflicto que puede causar el error <code>Subscript variable must be size 1, not 0</code>.</p>
+<p><strong>No hace falta memorizar esta función para K-means ni árboles</strong>; está disponible para continuar los controles de calidad del curso.</p>
+<h2>10.3. Archivo <code>R/10_00_preparar_datos_perfiles.R</code></h2>
+<p><strong>Meta:</strong> convertir la información necesaria en columnas auxiliares claras y guardar un <strong>RDS de preparación</strong>. El CSV no se modifica.</p>
+<p><strong>Entrada:</strong> <code>resultados/01_datos.rds</code>, si ya existe con <code>personas_raw</code>; de lo contrario se lee <code>data_raw/encuesta_socioeconomica_2026.csv</code>.<br />
+<strong>Salidas:</strong> <code>resultados/10_datos_preparados.rds</code> y <code>resultados/tablas/10_diagnostico.csv</code>.</p>
+<p><strong>Importante:</strong> si existe un RDS anterior, el script lo utiliza. Si quiere obligatoriamente usar el CSV como fuente, retire o renombre temporalmente el RDS previo, en vez de editarlo sin documentarlo.</p>
+<h3>Primera instrucción: reutilizar la configuración</h3>
+<pre><code class="language-r">source(here::here(&quot;R&quot;, &quot;00_configuracion.R&quot;))
+</code></pre>
+<p><code>source()</code> abre otro script R y ejecuta su contenido. Por eso el archivo <code>00_configuracion.R</code> debe estar en la carpeta <code>R/</code>. <code>here::here()</code> evita escribir una ruta específica de Windows.</p>
+<h3>Paso 1. Recuperar los datos</h3>
+<p><strong>Qué vamos a conseguir:</strong> Trabajar con una fuente real del proyecto, sin copiar archivos manualmente.</p>
+<pre><code class="language-r"># 1. Reutilizar el punto de control de los modulos originales cuando exista.
+ruta_previa &lt;- here::here(&quot;resultados&quot;, &quot;01_datos.rds&quot;)
+if (file.exists(ruta_previa)) {
+  paquete_previo &lt;- readRDS(ruta_previa)
+  if (!&quot;personas_raw&quot; %in% names(paquete_previo)) {
+    stop(&quot;El RDS previo no contiene 'personas_raw'. Revise el archivo.&quot;)
+  }
+  fuente &lt;- paquete_previo$personas_raw
+  procedencia &lt;- &quot;RDS del modulo 1&quot;
+} else {
+  fuente &lt;- leer_texto(here::here(&quot;data_raw&quot;, &quot;encuesta_socioeconomica_2026.csv&quot;))
+  procedencia &lt;- &quot;CSV original leido como texto&quot;
+}
+</code></pre>
+<p><strong>Explicación del fragmento, en lenguaje sencillo:</strong> <code>here::here()</code> construye la ruta; <code>file.exists()</code> pregunta si el archivo está disponible. <code>readRDS()</code> recupera un objeto guardado previamente. Si el RDS ya existe, el script verifica que contenga <code>personas_raw</code>; si no existe, <code>leer_texto()</code> utiliza el CSV. La variable <code>procedencia</code> documenta qué fuente se usó. <strong>Qué revisar:</strong> el nombre del archivo y si el mensaje de procedencia coincide con lo esperado.</p>
+<p><strong>Mini comprobación:</strong> Abra el RDS si existe y confirme el nombre de la fuente.</p>
+<h3>Paso 2. Verificar que existan las columnas</h3>
+<p><strong>Qué vamos a conseguir:</strong> Evitar análisis con columnas inexistentes.</p>
+<pre><code class="language-r"># 2. Asegurar que usamos el mismo esquema de la encuesta del taller.
+columnas &lt;- c(&quot;id_encuesta&quot;, &quot;id_persona&quot;, &quot;periodo_referencia&quot;, &quot;edad&quot;,
+              &quot;ingreso_mensual_usd&quot;, &quot;zona&quot;, &quot;nivel_educacion&quot;, &quot;acceso_internet&quot;)
+faltan &lt;- setdiff(columnas, names(fuente))
+if (length(faltan) &gt; 0) stop(&quot;Columnas ausentes: &quot;, paste(faltan, collapse = &quot;, &quot;))
+</code></pre>
+<p><strong>Explicación del fragmento, en lenguaje sencillo:</strong> <code>c()</code> forma una lista de nombres obligatorios. <code>names(fuente)</code> obtiene los nombres actuales de columnas. <code>setdiff(columnas, names(fuente))</code> encuentra las columnas requeridas que faltan. Si falta alguna, <code>stop()</code> impide continuar, porque un análisis con variables ausentes no sería confiable. <strong>Compruebe</strong> que el diagnóstico inicial muestra las columnas esperadas.</p>
+<p><strong>Mini comprobación:</strong> Use <code>names(fuente)</code> para revisar las columnas.</p>
+<h3>Paso 3. Crear columnas auxiliares</h3>
+<p><strong>Qué vamos a conseguir:</strong> Dejar los valores útiles listos para cálculos, sin alterar los originales.</p>
+<pre><code class="language-r"># 3. Convertir SOLO columnas auxiliares: conservar intactas las originales.
+# normalizar_ausencia() y a_numero() proceden de 00_configuracion.R.
+datos &lt;- fuente %&gt;%
+  dplyr::mutate(
+    fila_csv = dplyr::row_number() + 1L,
+    edad_n = a_numero(edad),
+    ingreso_n = a_numero(ingreso_mensual_usd),
+    zona_limpia = normalizar_ausencia(zona),
+    educacion_limpia = normalizar_ausencia(nivel_educacion),
+    acceso_limpio = normalizar_ausencia(acceso_internet),
+    zona_norm = dplyr::case_when(
+      toupper(zona_limpia) == &quot;URBANA&quot; ~ &quot;Urbana&quot;,
+      toupper(zona_limpia) == &quot;RURAL&quot; ~ &quot;Rural&quot;,
+      TRUE ~ NA_character_
+    ),
+    educacion_norm = dplyr::case_when(
+      toupper(educacion_limpia) == &quot;SIN INSTRUCCION&quot; ~ &quot;Sin instruccion&quot;,
+      toupper(educacion_limpia) == &quot;PRIMARIA&quot; ~ &quot;Primaria&quot;,
+      toupper(educacion_limpia) == &quot;SECUNDARIA&quot; ~ &quot;Secundaria&quot;,
+      toupper(educacion_limpia) == &quot;SUPERIOR&quot; ~ &quot;Superior&quot;,
+      toupper(educacion_limpia) == &quot;POSGRADO&quot; ~ &quot;Posgrado&quot;,
+      TRUE ~ NA_character_
+    ),
+    acceso_norm = dplyr::case_when(
+      toupper(acceso_limpio) == &quot;SI&quot; ~ &quot;Si&quot;,
+      toupper(acceso_limpio) == &quot;NO&quot; ~ &quot;No&quot;,
+      TRUE ~ NA_character_
+    )
+  )
+</code></pre>
+<p><strong>Explicación del fragmento, en lenguaje sencillo:</strong> Este es el paso más largo, pero hace algo sencillo: <strong>crea versiones auxiliares interpretables</strong>. <code>mutate()</code> agrega columnas, <code>row_number()</code> asigna una posición de referencia, <code>a_numero()</code> convierte edad e ingreso y <code>normalizar_ausencia()</code> distingue textos vacíos. <code>case_when()</code> equivale a una serie de decisiones: «si ocurre esto, escriba aquello». <code>toupper()</code> permite reconocer <code>URBANA</code> y <code>Urbana</code> como la misma zona. Los valores que no encajan reciben <code>NA_character_</code> para que se revisen. <strong>No se pierde</strong> la columna original.</p>
+<p><strong>Mini comprobación:</strong> Ejecute <code>head(datos[, c(&quot;edad&quot;, &quot;edad_n&quot;, &quot;zona&quot;, &quot;zona_norm&quot;)])</code>.</p>
+<h3>Paso 4. Definir qué registros son aptos</h3>
+<p><strong>Qué vamos a conseguir:</strong> Marcar qué filas pueden entrar en el agrupamiento.</p>
+<pre><code class="language-r"># 4. La edad y el ingreso deben ser numericOS plausibles para la practica.
+# Rango de edad 18–110: criterio DIDACTICO, NO regla oficial.
+# 0 USD es ingreso valido. Los ingresos negativos NO se imputan ni borran.
+datos &lt;- datos %&gt;%
+  dplyr::mutate(
+    edad_valida = !is.na(edad_n) &amp; edad_n &gt;= 18 &amp; edad_n &lt;= 110,
+    ingreso_valido = !is.na(ingreso_n) &amp; ingreso_n &gt;= 0,
+    apto_agrupamiento = edad_valida &amp; ingreso_valido
+  )
+</code></pre>
+<p><strong>Explicación del fragmento, en lenguaje sencillo:</strong> Una regla lógica con <code>&amp;</code> exige que ambas condiciones sean verdaderas. <code>!is.na(edad_n)</code> significa «hay edad disponible»; <code>edad_n &gt;= 18 &amp; edad_n &lt;= 110</code> define el intervalo <strong>solo para este ejercicio</strong>. <code>ingreso_n &gt;= 0</code> admite cero, pero no negativos. <code>apto_agrupamiento</code> marca si el registro puede entrar en K-means. <strong>Una fila no apta sigue existiendo en la base</strong>, solo queda fuera de este modelo.</p>
+<p><strong>Mini comprobación:</strong> Ejecute <code>table(datos$apto_agrupamiento)</code>.</p>
+<h3>Paso 5. Transformar los ingresos</h3>
+<p><strong>Qué vamos a conseguir:</strong> Reducir la influencia de ingresos muy altos en el cálculo de distancia.</p>
+<pre><code class="language-r"># 5. log1p(x) equivale a log(1+x). Reduce la asimetria y admite ingreso cero.
+# Solo calculamos logaritmo en posiciones con ingreso numerico no negativo.
+datos$ingreso_log &lt;- NA_real_
+pos_validas &lt;- which(datos$ingreso_valido)
+datos$ingreso_log[pos_validas] &lt;- log1p(datos$ingreso_n[pos_validas])
+</code></pre>
+<p><strong>Explicación del fragmento, en lenguaje sencillo:</strong> <code>log1p(x)</code> calcula el logaritmo natural de <code>(1 + x)</code> y permite usar el ingreso cero. Se aplica únicamente a ingresos válidos. <code>which()</code> encuentra las posiciones aptas; el uso de corchetes <code>[]</code> coloca resultados solo en ellas. ¿Por qué? Para que un valor muy alto no domine tanto el agrupamiento. <strong>La tabla original de ingresos sigue en dólares</strong>; el logaritmo solo ayuda en el cálculo de semejanza.</p>
+<p><strong>Mini comprobación:</strong> Compare <code>head(datos$ingreso_n)</code> y <code>head(datos$ingreso_log)</code>.</p>
+<h3>Paso 6. Contar los registros incluidos y excluidos</h3>
+<p><strong>Qué vamos a conseguir:</strong> Mostrar cuántos registros pueden utilizarse y por qué.</p>
+<pre><code class="language-r"># 6. Cuantificar filas admisibles/excluidas: no esconder el denominador.
+diagnostico &lt;- tibble::tibble(
+  registros_totales = nrow(datos),
+  edad_invalida_o_ausente = sum(!datos$edad_valida),
+  ingreso_invalido_o_ausente = sum(!datos$ingreso_valido),
+  registros_aptos = sum(datos$apto_agrupamiento),
+  registros_excluidos = sum(!datos$apto_agrupamiento)
+)
+print(diagnostico)
+</code></pre>
+<p><strong>Explicación del fragmento, en lenguaje sencillo:</strong> <code>tibble()</code> construye una tabla-resumen. <code>nrow(datos)</code> cuenta filas. Como R interpreta <code>TRUE</code> como 1 y <code>FALSE</code> como 0 al usar <code>sum()</code>, <code>sum(datos$apto_agrupamiento)</code> cuenta registros aptos. La tabla muestra, entre otros valores, cuántos registros fueron excluidos. <strong>No interprete una exclusión como una corrección</strong>. Las causas pueden superponerse, por lo que sumar los conteos de edad e ingreso inválidos puede contar una fila dos veces.</p>
+<p><strong>Mini comprobación:</strong> Compare <code>diagnostico$registros_totales</code> con la suma de aptos y excluidos.</p>
+<h3>Paso 7. Guardar el RDS de preparación</h3>
+<p><strong>Qué vamos a conseguir:</strong> Guardar el avance para usarlo aunque se cierre RStudio.</p>
+<pre><code class="language-r"># 7. Guardar RDS para recuperar datos tipados sin depender del Environment.
+ruta_rds &lt;- here::here(&quot;resultados&quot;, &quot;10_datos_preparados.rds&quot;)
+saveRDS(list(datos = datos, diagnostico = diagnostico,
+             procedencia = procedencia, fecha = as.character(Sys.Date())),
+        ruta_rds)
+readr::write_csv(diagnostico, here::here(&quot;resultados&quot;, &quot;tablas&quot;, &quot;10_diagnostico.csv&quot;))
+stopifnot(file.exists(ruta_rds))
+message(&quot;Sesión 10, preparación lista: &quot;, ruta_rds)
+</code></pre>
+<p><strong>Explicación del fragmento, en lenguaje sencillo:</strong> <code>list()</code> reúne datos, diagnóstico y procedencia. <code>saveRDS()</code> los guarda sin perder los tipos. <code>write_csv()</code> exporta una tabla simple para revisar en Excel. <code>stopifnot()</code> detiene el proceso si el archivo no existe; <code>message()</code> informa la ruta al terminar. <strong>Archivo esperado:</strong> <code>resultados/10_datos_preparados.rds</code>. Piense en él como una caja cerrada que recuperaremos en el siguiente script.</p>
+<p><strong>Mini comprobación:</strong> Ejecute <code>file.exists(here::here(&quot;resultados&quot;, &quot;10_datos_preparados.rds&quot;))</code>.</p>
+<h2>10.4. Archivo <code>R/10_01_identificar_perfiles.R</code></h2>
+<p><strong>Meta:</strong> construir grupos exploratorios y guardar las tablas, gráficos y el modelo.<br />
+<strong>Entrada:</strong> <code>resultados/10_datos_preparados.rds</code>.<br />
+<strong>Salidas:</strong> <code>resultados/10_perfiles.rds</code>, tablas CSV y dos figuras PNG.</p>
+<p><strong>Frase sencilla:</strong> «Tomamos registros válidos, los agrupamos por similitud de edad e ingreso y describimos cómo son los grupos».</p>
+<h3>Paso 1. Leer el RDS anterior</h3>
+<pre><code class="language-r"># 1. Recuperar exactamente los datos ya preparados.
+ruta_entrada &lt;- here::here(&quot;resultados&quot;, &quot;10_datos_preparados.rds&quot;)
+if (!file.exists(ruta_entrada)) stop(&quot;Primero ejecute R/10_00_preparar_datos_perfiles.R&quot;)
+preparacion &lt;- readRDS(ruta_entrada)
+datos &lt;- preparacion$datos
+</code></pre>
+<p><strong>¿Qué hace este fragmento?</strong> <code>readRDS()</code> abre lo que guardó el script anterior. El objeto <code>preparacion</code> es una lista; <code>preparacion$datos</code> accede a la tabla preparada. Si falta el archivo, el programa se detiene con una instrucción clara de qué etapa completar antes.</p>
+<p><strong>Pregunta de lectura:</strong> ¿De qué archivo salieron los datos?</p>
+<h3>Paso 2. Elegir registros aptos</h3>
+<pre><code class="language-r"># 2. Seleccionar solo edades e ingresos validos. No corregimos la fuente.
+muestra &lt;- datos %&gt;% dplyr::filter(apto_agrupamiento)
+if (nrow(muestra) &lt; 3) stop(&quot;No hay suficientes observaciones para tres grupos&quot;)
+</code></pre>
+<p><strong>¿Qué hace este fragmento?</strong> <code>filter(apto_agrupamiento)</code> conserva únicamente las filas con edad e ingreso válidos para esta práctica. <code>nrow()</code> cuenta las filas resultantes. El <code>if</code> evita intentar tres grupos cuando hay menos de tres registros. <strong>No borra ninguna fila del CSV</strong>.</p>
+<p><strong>Pregunta de lectura:</strong> ¿Una fila excluida desaparece del CSV?</p>
+<h3>Paso 3. Estandarizar variables</h3>
+<pre><code class="language-r"># 3. scale() centra por media y divide por desviacion estandar cada variable.
+# Sin ello, una variable con unidades mayores dominaria la distancia euclidiana.
+matriz &lt;- as.matrix(muestra[, c(&quot;edad_n&quot;, &quot;ingreso_log&quot;)])
+matriz_z &lt;- scale(matriz)
+if (anyNA(matriz_z)) stop(&quot;No es posible estandarizar: revise las variables&quot;)
+</code></pre>
+<p><strong>¿Qué hace este fragmento?</strong> <code>as.matrix()</code> convierte dos columnas numéricas en una matriz, formato que necesita el algoritmo. <code>scale()</code> transforma cada columna para que tenga una escala comparable: resta el promedio y divide por su desviación estándar. <code>anyNA()</code> detecta si la estandarización dejó valores ausentes. <strong>Nota:</strong> se utiliza ingreso transformado (<code>ingreso_log</code>), no dólares originales, para definir distancias.</p>
+<p><strong>Pregunta de lectura:</strong> ¿Qué ocurriría si usáramos dólares sin estandarizar?</p>
+<h3>Paso 4. Formar tres grupos</h3>
+<pre><code class="language-r"># 4. Fijar semilla para reproducibilidad; nstart prueba varios centros iniciales.
+set.seed(2026)
+modelo &lt;- stats::kmeans(matriz_z, centers = 3, nstart = 25, iter.max = 100)
+</code></pre>
+<p><strong>¿Qué hace este fragmento?</strong> <code>set.seed(2026)</code> establece una semilla para obtener resultados reproducibles. <code>kmeans(..., centers = 3)</code> solicita tres grupos. <code>nstart = 25</code> prueba 25 inicios distintos para buscar una solución mejor; <code>iter.max = 100</code> limita iteraciones de cada intento. <strong>No significa</strong> que haya exactamente tres perfiles naturales en la realidad: <code>3</code> es una elección docente.</p>
+<p><strong>Pregunta de lectura:</strong> ¿Por qué fijamos una semilla?</p>
+<h3>Paso 5. Añadir la etiqueta de grupo</h3>
+<pre><code class="language-r"># 5. Asignar etiqueta neutral a cada observacion.
+# Los numeros de grupo son ARBITRARIOS; no son niveles de pobreza.
+muestra$grupo &lt;- factor(paste0(&quot;Grupo &quot;, modelo$cluster),
+                       levels = paste0(&quot;Grupo &quot;, 1:3))
+</code></pre>
+<p><strong>¿Qué hace este fragmento?</strong> <code>modelo$cluster</code> guarda para cada fila el número de grupo asignado. <code>paste0(&quot;Grupo &quot;, ...)</code> construye etiquetas legibles, como <code>Grupo 2</code>. <code>factor()</code> identifica una variable categórica y define el orden de los niveles. <strong>Importante:</strong> los números de los grupos no representan una clasificación de riqueza o pobreza.</p>
+<p><strong>Pregunta de lectura:</strong> ¿&quot;Grupo 1&quot; significa &quot;más pobre&quot;?</p>
+<h3>Paso 6. Resumir perfiles con promedios y porcentajes</h3>
+<pre><code class="language-r"># 6. Construir perfiles descriptivos por grupo.
+perfiles &lt;- muestra %&gt;%
+  dplyr::group_by(grupo) %&gt;%
+  dplyr::summarise(
+    personas = dplyr::n(),
+    edad_media = round(mean(edad_n), 1),
+    edad_mediana = round(median(edad_n), 1),
+    ingreso_medio = round(mean(ingreso_n), 2),
+    ingreso_mediano = round(median(ingreso_n), 2),
+    .groups = &quot;drop&quot;
+  ) %&gt;%
+  dplyr::mutate(pct_muestra = round(100 * personas / sum(personas), 1))
+
+zonas &lt;- muestra %&gt;% dplyr::count(grupo, zona_norm, name = &quot;n&quot;) %&gt;%
+  dplyr::group_by(grupo) %&gt;%
+  dplyr::mutate(pct_grupo = round(100 * n / sum(n), 1)) %&gt;%
+  dplyr::ungroup()
+
+educacion &lt;- muestra %&gt;% dplyr::count(grupo, educacion_norm, name = &quot;n&quot;) %&gt;%
+  dplyr::group_by(grupo) %&gt;%
+  dplyr::mutate(pct_grupo = round(100 * n / sum(n), 1)) %&gt;%
+  dplyr::ungroup()
+
+print(perfiles)
+</code></pre>
+<p><strong>¿Qué hace este fragmento?</strong> <code>group_by(grupo)</code> organiza temporalmente los datos por grupo. <code>summarise()</code> calcula una fila de resumen por grupo: <code>n()</code> cuenta personas, <code>mean()</code> obtiene la media, <code>median()</code> obtiene el centro ordenado y <code>round()</code> limita decimales. <code>count(grupo, zona_norm)</code> obtiene frecuencias; <code>mutate()</code> añade porcentajes; <code>ungroup()</code> elimina la agrupación temporal. <code>pct_muestra</code> divide por toda la muestra, mientras que <code>pct_grupo</code> usa como denominador el tamaño de <strong>cada</strong> grupo.</p>
+<p><strong>Pregunta de lectura:</strong> ¿Cuál es la diferencia entre media y mediana?</p>
+<h3>Paso 7. Dibujar los gráficos</h3>
+<pre><code class="language-r"># 7. Graficos: una figura de edades e ingresos y otra de educacion por grupo.
+figura_perfiles &lt;- ggplot2::ggplot(
+    muestra, ggplot2::aes(x = edad_n, y = ingreso_n, color = grupo)) +
+  ggplot2::geom_point(alpha = 0.5, size = 1.5) +
+  ggplot2::labs(title = &quot;Perfiles exploratorios: edad e ingreso&quot;,
+                subtitle = &quot;Grupos calculados con edad estandarizada y log(1 + ingreso)&quot;,
+                x = &quot;Edad (años)&quot;, y = &quot;Ingreso mensual (USD)&quot;, color = &quot;Grupo&quot;) +
+  ggplot2::theme_minimal()
+
+figura_educacion &lt;- ggplot2::ggplot(
+    educacion, ggplot2::aes(x = grupo, y = pct_grupo, fill = educacion_norm)) +
+  ggplot2::geom_col() +
+  ggplot2::labs(title = &quot;Composición educativa de los grupos&quot;,
+                x = &quot;Grupo&quot;, y = &quot;Porcentaje dentro del grupo&quot;, fill = &quot;Nivel&quot;) +
+  ggplot2::theme_minimal()
+
+ggplot2::ggsave(here::here(&quot;resultados&quot;, &quot;figuras&quot;, &quot;10_perfiles.png&quot;),
+                figura_perfiles, width = 9, height = 5.5, dpi = 160)
+ggplot2::ggsave(here::here(&quot;resultados&quot;, &quot;figuras&quot;, &quot;10_educacion_por_grupo.png&quot;),
+                figura_educacion, width = 9, height = 5.5, dpi = 160)
+</code></pre>
+<p><strong>¿Qué hace este fragmento?</strong> <code>ggplot()</code> inicia un gráfico; <code>aes()</code> indica qué columnas van en los ejes y en el color; <code>geom_point()</code> dibuja un punto por registro; <code>geom_col()</code> crea barras con porcentajes ya calculados. <code>labs()</code> escribe títulos y nombres de ejes; <code>theme_minimal()</code> usa un diseño sencillo; <code>ggsave()</code> guarda archivos PNG. <strong>Para interpretar el gráfico:</strong> no confunda un color de grupo con una categoría oficial.</p>
+<p><strong>Pregunta de lectura:</strong> ¿Qué relación debe haber entre barras y tabla de porcentajes?</p>
+<h3>Paso 8. Guardar los resultados</h3>
+<pre><code class="language-r"># 8. Guardar tablas, el modelo y los datos en formato nativo RDS.
+paquete &lt;- list(
+  metadatos = list(titulo = &quot;Identificacion de perfiles — encuesta ficticia&quot;,
+                   fecha = as.character(Sys.Date()),
+                   centros = 3, observaciones = nrow(muestra),
+                   advertencia = &quot;No es una clasificacion oficial ni inferencia poblacional&quot;),
+  diagnostico = preparacion$diagnostico,
+  datos_preparados = datos,
+  datos_agrupados = muestra,
+  modelo = modelo,
+  tablas = list(perfiles = perfiles, zonas = zonas, educacion = educacion),
+  figuras = c(&quot;resultados/figuras/10_perfiles.png&quot;,
+              &quot;resultados/figuras/10_educacion_por_grupo.png&quot;)
+)
+archivo &lt;- here::here(&quot;resultados&quot;, &quot;10_perfiles.rds&quot;)
+saveRDS(paquete, archivo, compress = &quot;gzip&quot;)
+readr::write_csv(perfiles, here::here(&quot;resultados&quot;, &quot;tablas&quot;, &quot;10_perfiles.csv&quot;))
+readr::write_csv(zonas, here::here(&quot;resultados&quot;, &quot;tablas&quot;, &quot;10_zonas_perfiles.csv&quot;))
+readr::write_csv(educacion, here::here(&quot;resultados&quot;, &quot;tablas&quot;, &quot;10_educacion_perfiles.csv&quot;))
+stopifnot(nrow(readRDS(archivo)$tablas$perfiles) == 3)
+message(&quot;Sesion 10: reporte listo para renderizar usando &quot;, archivo)
+</code></pre>
+<p><strong>¿Qué hace este fragmento?</strong> <code>list()</code> reúne modelo, tablas, metadatos y datos de referencia en un solo objeto. <code>saveRDS()</code> crea el archivo que leerá Quarto. <code>write_csv()</code> permite revisar las tablas también fuera de R. <code>stopifnot()</code> comprueba que existan tres filas de perfiles. <strong>Qué revisar:</strong> <code>resultados/10_perfiles.rds</code> y los PNG. Sin estos productos el informe Quarto no tendrá contenido.</p>
+<p><strong>Pregunta de lectura:</strong> ¿Cuál es el archivo RDS que leerá Quarto?</p>
+<h2>10.5. Primer informe Quarto: <code>reportes/sesion_10_perfiles.qmd</code></h2>
+<p><strong>Qué es un <code>.qmd</code>:</strong> es un documento que contiene secciones escritas, pequeños bloques R y configuración. Quarto combina esas partes para generar un archivo que se pueda leer en el navegador (HTML) o editar en Word (DOCX).</p>
+<h3>A. El encabezado YAML</h3>
+<pre><code class="language-yaml">title: &quot;Sesión 10 | Identificación de patrones y perfiles&quot;
+subtitle: &quot;Encuesta socioeconómica sintética — ejercicio exploratorio en R&quot;
+author: &quot;Participante de la capacitación&quot;
+lang: es
+format:
+  html:
+    toc: true
+    code-fold: true
+    embed-resources: true
+  docx:
+    toc: true
+execute:
+  echo: false
+  warning: false
+  message: false
+</code></pre>
+<ul>
+<li><code>title</code> y <code>subtitle</code>: texto de la portada.</li>
+<li><code>author</code>: persona responsable; puede cambiarla por el nombre del participante.</li>
+<li><code>lang: es</code>: idioma en español.</li>
+<li><code>html</code> y <code>docx</code>: formatos de salida; <code>toc: true</code> activa el índice.</li>
+<li><code>embed-resources: true</code>: facilita un HTML con recursos incorporados.</li>
+<li><code>execute: echo: false</code>: ejecuta el código, pero no imprime las instrucciones R en el informe final.</li>
+</ul>
+<h3>B. Las secciones del documento</h3>
+<table>
+<thead>
+<tr>
+  <th>Apartado del QMD</th>
+  <th>Explicación</th>
+  <th>De dónde sale su contenido</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>1. Introducción</td>
+  <td>Cuenta qué pregunta quiere responder el estudio.</td>
+  <td>Texto escrito por el estudiante.</td>
+</tr>
+<tr>
+  <td>2. Objetivo</td>
+  <td>Indica para qué se agrupan las respuestas.</td>
+  <td>Texto metodológico.</td>
+</tr>
+<tr>
+  <td>3. Metodología</td>
+  <td>Explica edad, ingreso, exclusiones, logaritmo y K-means.</td>
+  <td>Script 10_00 y 10_01.</td>
+</tr>
+<tr>
+  <td>4. Perfiles</td>
+  <td>Incluye una tabla de tamaño, edad e ingreso por grupo.</td>
+  <td><code>paquete$tablas$perfiles</code>.</td>
+</tr>
+<tr>
+  <td>5. Distribución</td>
+  <td>Muestra un diagrama de puntos.</td>
+  <td><code>resultados/figuras/10_perfiles.png</code>.</td>
+</tr>
+<tr>
+  <td>6. Zona y educación</td>
+  <td>Compara la composición de los grupos.</td>
+  <td>Tabla y PNG preparados.</td>
+</tr>
+<tr>
+  <td>7. Conclusiones</td>
+  <td>Describe hallazgos, sin declarar causalidad.</td>
+  <td>Lectura responsable de las tablas.</td>
+</tr>
+<tr>
+  <td>8–9. Limitaciones y evidencias</td>
+  <td>Aclara qué no representa el modelo y cuándo fue generado.</td>
+  <td>Metadatos del RDS.</td>
+</tr>
+</tbody>
+</table>
+<h3>C. Bloque Quarto 1: <code>cargar-resultados</code></h3>
+<pre><code class="language-qmd">```{r}
+#| label: cargar-resultados
+# 1. El QMD solo LEE el RDS generado por el script 10_01.
+# 2. No requiere objetos previos abiertos en la consola de RStudio.
+if (!requireNamespace(&quot;here&quot;, quietly = TRUE) ||
+    !requireNamespace(&quot;knitr&quot;, quietly = TRUE)) {
+  stop(&quot;Instale here y knitr antes de renderizar&quot;)
+}
+ruta &lt;- here::here(&quot;resultados&quot;, &quot;10_perfiles.rds&quot;)
+if (!file.exists(ruta)) stop(&quot;Falta resultados/10_perfiles.rds. Ejecute los scripts 10_00 y 10_01&quot;)
+paquete &lt;- readRDS(ruta)
+```
+</code></pre>
+<p><strong>Explicación:</strong> <code>requireNamespace()</code> comprueba si están instalados <code>here</code> y <code>knitr</code>. <code>readRDS()</code> abre el resultado de la sesión 10. <strong>Por eso el reporte no depende de objetos abiertos en Environment.</strong></p>
+<h3>C. Bloque Quarto 2: <code>tbl-cobertura</code></h3>
+<pre><code class="language-qmd">```{r}
+#| label: tbl-cobertura
+knitr::kable(paquete$diagnostico,
+             caption = &quot;Registros disponibles y excluidos del agrupamiento&quot;)
+```
+</code></pre>
+<p><strong>Explicación:</strong> <code>knitr::kable()</code> transforma el <code>diagnostico</code> en una tabla legible; permite explicar cuántos registros se excluyeron, sin ocultar el denominador.</p>
+<h3>C. Bloque Quarto 3: <code>tbl-perfiles</code></h3>
+<pre><code class="language-qmd">```{r}
+#| label: tbl-perfiles
+knitr::kable(paquete$tablas$perfiles,
+             caption = &quot;Características descriptivas de cada grupo&quot;,
+             digits = 1)
+```
+</code></pre>
+<p><strong>Explicación:</strong> <code>kable(paquete$tablas$perfiles)</code> muestra la tabla de grupos. <code>digits = 1</code> establece la presentación de decimales en la tabla.</p>
+<h3>C. Bloque Quarto 4: <code>fig-perfiles</code></h3>
+<pre><code class="language-qmd">```{r}
+#| label: fig-perfiles
+#| fig-cap: &quot;Distribución por edad e ingreso; cada punto corresponde a un registro sintético.&quot;
+#| out-width: &quot;100%&quot;
+knitr::include_graphics(here::here(&quot;resultados&quot;, &quot;figuras&quot;, &quot;10_perfiles.png&quot;))
+```
+</code></pre>
+<p><strong>Explicación:</strong> <code>knitr::include_graphics()</code> inserta el PNG ya generado. <code>fig-cap</code> escribe el pie de figura y <code>out-width</code> controla su tamaño visual.</p>
+<h3>C. Bloque Quarto 5: <code>tbl-zonas</code></h3>
+<pre><code class="language-qmd">```{r}
+#| label: tbl-zonas
+knitr::kable(paquete$tablas$zonas,
+             caption = &quot;Composición de los grupos por zona&quot;)
+```
+</code></pre>
+<p><strong>Explicación:</strong> <code>kable()</code> presenta la tabla cruzada por grupo y zona. Los porcentajes deben interpretarse dentro de su denominador.</p>
+<h3>C. Bloque Quarto 6: <code>fig-educacion</code></h3>
+<pre><code class="language-qmd">```{r}
+#| label: fig-educacion
+#| fig-cap: &quot;Distribución porcentual de educación en cada grupo.&quot;
+#| out-width: &quot;100%&quot;
+knitr::include_graphics(here::here(&quot;resultados&quot;, &quot;figuras&quot;, &quot;10_educacion_por_grupo.png&quot;))
+```
+</code></pre>
+<p><strong>Explicación:</strong> <code>include_graphics()</code> inserta la imagen de composición educativa por grupo. Compruebe que se creó antes de renderizar.</p>
+<h3>C. Bloque Quarto 7: <code>comentarios-automaticos-perfiles</code></h3>
+<pre><code class="language-qmd">```{r}
+#| label: comentarios-automaticos-perfiles
+#| results: asis
+# Comentar resultados a partir de las tablas, sin escribir cifras manuales.
+p &lt;- paquete$tablas$perfiles
+mas_numeroso &lt;- p[which.max(p$personas), ]
+mayor_mediana &lt;- p[which.max(p$ingreso_mediano), ]
+cat(sprintf(&quot;- El grupo con más observaciones es **%s**, con **%s registros**.\n&quot;,
+            mas_numeroso$grupo, mas_numeroso$personas))
+cat(sprintf(&quot;- La mayor mediana de ingreso corresponde a **%s** (USD %.2f).\n&quot;,
+            mayor_mediana$grupo, mayor_mediana$ingreso_mediano))
+cat(sprintf(&quot;- El análisis incluyó **%s de %s registros**; las exclusiones se documentaron en la metodología.\n&quot;,
+            paquete$metadatos$observaciones,
+            paquete$diagnostico$registros_totales))
+```
+</code></pre>
+<p><strong>Explicación:</strong> <code>which.max()</code> localiza el grupo con más registros o mayor mediana de ingreso; <code>sprintf()</code> da formato a los números; <code>cat()</code> escribe frases automáticas. El participante debe <strong>revisar</strong> esas frases y agregar interpretación contextual.</p>
+<h3>C. Bloque Quarto 8: <code>tbl-procedencia</code></h3>
+<pre><code class="language-qmd">```{r}
+#| label: tbl-procedencia
+cat(&quot;Fecha de generación: &quot;, paquete$metadatos$fecha, &quot;\n\n&quot;)
+cat(&quot;Registros analizados: &quot;, paquete$metadatos$observaciones, &quot;\n\n&quot;)
+cat(&quot;Cantidad de grupos: &quot;, paquete$metadatos$centros, &quot;\n&quot;)
+```
+</code></pre>
+<p><strong>Explicación:</strong> <code>cat()</code> muestra fecha, número de observaciones y grupos guardados en el RDS: evidencia para reproducibilidad.</p>
+<h2>10.6. Archivo <code>R/10_02_renderizar_reporte.R</code></h2>
+<p><strong>Meta:</strong> convertir el QMD anterior en documentos. <strong>Renderizar</strong> significa procesar el documento y producir un archivo terminado.</p>
+<pre><code class="language-r"># =============================================================================
+# SESION 10 — SCRIPT 10_02: RENDERIZAR EL REPORTE EN HTML Y WORD
+# Ejecutar desde la consola R, NO escribir 'quarto render' sin system2().
+# =============================================================================
+source(here::here(&quot;R&quot;, &quot;00_configuracion.R&quot;))
+rds &lt;- here::here(&quot;resultados&quot;, &quot;10_perfiles.rds&quot;)
+qmd &lt;- here::here(&quot;reportes&quot;, &quot;sesion_10_perfiles.qmd&quot;)
+if (!file.exists(rds)) stop(&quot;Primero ejecute R/10_01_identificar_perfiles.R&quot;)
+if (!file.exists(qmd)) stop(&quot;No se encuentra reportes/sesion_10_perfiles.qmd&quot;)
+cli &lt;- Sys.which(&quot;quarto&quot;)
+if (!nzchar(cli)) stop(&quot;Quarto CLI no disponible. Instale Quarto y compruebe 'quarto --version' en Terminal.&quot;)
+
+# Por defecto genera ambos formatos. Cambie a c('html') para solo HTML.
+formatos &lt;- c(&quot;html&quot;, &quot;docx&quot;)
+for (formato in formatos) {
+  message(&quot;Generando reporte de sesion 10 en: &quot;, formato)
+  estado &lt;- system2(cli, args = c(&quot;render&quot;, shQuote(qmd), &quot;--to&quot;, formato))
+  if (!identical(as.integer(estado), 0L)) stop(&quot;Quarto devolvio un error: &quot;, formato)
+  salida &lt;- sub(&quot;\\.qmd$&quot;, paste0(&quot;.&quot;, formato), qmd)
+  if (!file.exists(salida)) stop(&quot;No se genero el archivo esperado: &quot;, salida)
+  message(&quot;Generado: &quot;, salida)
+}
+</code></pre>
+<p><strong>Lea el programa en este orden:</strong></p>
+<ol>
+<li><code>source(...)</code> carga la configuración común.</li>
+<li><code>rds &lt;- ...</code> y <code>qmd &lt;- ...</code> indican dónde están los resultados y el documento fuente.</li>
+<li><code>file.exists()</code> detiene el proceso si falta una entrada.</li>
+<li><code>Sys.which(&quot;quarto&quot;)</code> localiza el programa Quarto instalado.</li>
+<li><code>formatos &lt;- c(&quot;html&quot;, &quot;docx&quot;)</code> define los formatos solicitados; para empezar, puede usar <code>c(&quot;html&quot;)</code>.</li>
+<li><code>for (formato in formatos)</code> repite el renderizado una vez para cada formato.</li>
+<li><code>system2()</code> llama a Quarto desde R (como si escribiera el comando en una Terminal).</li>
+<li>Se revisa el código de salida <code>0</code>, que normalmente significa ejecución exitosa, y la existencia del archivo generado.</li>
+</ol>
+<p><strong>Cómo ejecutarlo desde la Console de RStudio:</strong></p>
+<pre><code class="language-r">source(here::here(&quot;R&quot;, &quot;10_02_renderizar_reporte.R&quot;))
+</code></pre>
+<p><strong>Cómo ejecutarlo desde la pestaña Terminal, alternativamente:</strong></p>
+<pre><code class="language-bash">quarto render reportes/sesion_10_perfiles.qmd --to html
+</code></pre>
+<p>No escriba <code>quarto render ...</code> sin comillas directamente en <strong>Console</strong>, ya que R lo interpreta como código R y muestra <code>Error: unexpected symbol</code>.</p>
+<h3>Lista de verificación de la sesión 10</h3>
+<ul>
+<li class="task-list-item"><input class="task-list-item-checkbox" type="checkbox" disabled/>Se creó <code>resultados/10_datos_preparados.rds</code>.</li>
+<li class="task-list-item"><input class="task-list-item-checkbox" type="checkbox" disabled/>Se creó <code>resultados/10_perfiles.rds</code>.</li>
+<li class="task-list-item"><input class="task-list-item-checkbox" type="checkbox" disabled/>Existen <code>resultados/figuras/10_perfiles.png</code> y <code>10_educacion_por_grupo.png</code>.</li>
+<li class="task-list-item"><input class="task-list-item-checkbox" type="checkbox" disabled/>Se generó <code>reportes/sesion_10_perfiles.html</code>.</li>
+<li class="task-list-item"><input class="task-list-item-checkbox" type="checkbox" disabled/>El informe contiene introducción, objetivo, metodología, tabla, gráficos, interpretación y limitaciones.</li>
+<li class="task-list-item"><input class="task-list-item-checkbox" type="checkbox" disabled/>El estudiante redactó tres observaciones propias, sin atribuir validez oficial a los grupos.</li>
+</ul>
+<p><strong>Ejercicio básico:</strong> observe la tabla de perfiles e indique qué grupo tiene la edad mediana más alta, cuál tiene el ingreso mediano más alto y si son el mismo. <strong>Reto intermedio:</strong> explique por qué K-means puede cambiar si no se estandarizan variables.</p>
+<hr />
+<h1>SESIÓN 11 — Análisis estadístico de la calidad y variabilidad de perfiles</h1>
+<h2>11.1. ¿Por qué necesitamos esta sesión?</h2>
+<p>En la sesión 10 construimos tres grupos de encuestas según edades e ingresos parecidos. La siguiente pregunta no es predecir quién pertenece a un grupo: <strong>ya conocemos su grupo</strong>. Ahora queremos analizar la información que lo describe.</p>
+<p>Por ejemplo, dos grupos pueden tener una mediana de ingreso similar, pero uno puede tener ingresos bastante parecidos entre sí y el otro ingresos muy diferentes. Del mismo modo, podemos tener un grupo con información educativa más completa que otro. Esta distinción es útil para interpretar tablas sin confundir una observación poco común con un error.</p>
+<p><strong>Objetivo general:</strong> evaluar tamaño, medidas centrales, dispersión, completitud y posibles valores atípicos dentro de los perfiles ya construidos, y elaborar un informe descriptivo reproducible.</p>
+<p><strong>Resultado esperado:</strong> un RDS <code>11_calidad_perfiles.rds</code>, tablas CSV, tres imágenes PNG y reportes HTML/Word.</p>
+<h2>11.2. Conceptos estadísticos con ejemplos fáciles</h2>
+<h3>A. Frecuencia y porcentaje</h3>
+<ul>
+<li><strong>Frecuencia:</strong> cuántas personas pertenecen a una categoría o grupo.</li>
+<li><strong>Porcentaje:</strong> qué parte representan respecto de un total identificado.</li>
+</ul>
+<p><strong>Ejemplo inventado:</strong> si se agruparon 100 encuestas y 40 pertenecen al grupo A, el porcentaje del grupo A es <code>40 / 100 × 100 = 40 %</code>. El denominador son las encuestas <strong>agrupadas</strong>, no necesariamente todos los registros del archivo inicial.</p>
+<h3>B. Media y mediana</h3>
+<ul>
+<li><strong>Media:</strong> suma de valores dividida para la cantidad de valores. Ejemplo: <code>(100 + 200 + 900) / 3 = 400</code>.</li>
+<li><strong>Mediana:</strong> valor que queda en medio cuando ordenamos los datos. Para <code>100, 200, 900</code>, la mediana es <code>200</code>.</li>
+</ul>
+<p>Por tanto, un valor especialmente alto puede elevar la media; la mediana suele variar menos ante extremos. Ninguna de las dos es siempre «mejor»: responden preguntas distintas.</p>
+<h3>C. Dispersión y desviación estándar</h3>
+<p>La <strong>dispersión</strong> nos dice si los valores del grupo están cerca unos de otros o si son variados. La <strong>desviación estándar</strong> resume cuán alejados suelen estar los valores respecto de la media, utilizando una fórmula basada en las diferencias al cuadrado. Una desviación estándar alta expresa mayor variabilidad en las unidades originales.</p>
+<p><strong>Ejemplo:</strong> ingresos <code>400, 410, 420</code> son menos dispersos que <code>100, 400, 730</code>, aunque ambos conjuntos tienen una media de 410.</p>
+<h3>D. Cuartiles y rango intercuartílico (IQR)</h3>
+<ul>
+<li><strong>Q1:</strong> valor que deja aproximadamente un cuarto de las observaciones por debajo.</li>
+<li><strong>Q3:</strong> valor que deja aproximadamente tres cuartos por debajo.</li>
+<li><strong>IQR:</strong> <code>Q3 - Q1</code>; representa el ancho de la mitad central de los datos.</li>
+</ul>
+<p>Los cuartiles ayudan a resumir una distribución de ingresos sin depender demasiado de los extremos.</p>
+<h3>E. Diagrama de caja (<em>boxplot</em>)</h3>
+<p>Es un gráfico donde la caja va de Q1 a Q3 y una línea indica la mediana. Los «bigotes» representan observaciones dentro de límites convencionales. Puntos aislados fuera de esos límites son <strong>candidatos a valores atípicos</strong>, no errores confirmados.</p>
+<h3>F. Completitud por perfil</h3>
+<p><strong>Completitud</strong> significa «qué proporción de los valores esperados está presente». Ejemplo: en un grupo de 50 encuestas, 45 tienen educación informada: completitud educativa <code>45 / 50 × 100 = 90 %</code>.</p>
+<p>Importante: edad e ingreso se exigieron para integrar K-means. Si calculamos su completitud <strong>solamente entre los incluidos</strong>, obtendremos 100 % por construcción. Para aprender calidad sin ocultar esta selección, calcularemos la cobertura original por separado y la completitud de <strong>zona, educación y acceso a internet</strong> dentro de cada grupo.</p>
+<h3>G. Identificación de valores atípicos con IQR</h3>
+<p>Regla orientativa: ingreso fuera de <code>Q1 - 1,5 × IQR</code> o <code>Q3 + 1,5 × IQR</code>. Un ingreso real alto puede estar fuera de esos límites sin ser falso. Por eso el nombre correcto es «candidato para revisión».</p>
+<h2>11.3. Script <code>11_00_evaluar_completitud_perfiles.R</code></h2>
+<p><strong>Objetivo:</strong> utilizar el RDS de la sesión 10 y construir tablas de cobertura y completitud. El participante debe crear este archivo dentro de <code>R/</code> y ejecutar los pasos en el orden indicado.</p>
+<h3>Paso 1: abrir la configuración y el RDS de la sesión 10</h3>
+<pre><code class="language-r">source(here::here(&quot;R&quot;, &quot;00_configuracion.R&quot;))
+ruta_10 &lt;- here::here(&quot;resultados&quot;, &quot;10_perfiles.rds&quot;)
+if (!file.exists(ruta_10)) stop(&quot;Falta el RDS de la sesión 10&quot;)
+paquete_10 &lt;- readRDS(ruta_10)
+</code></pre>
+<ul>
+<li><code>source()</code> ejecuta un archivo R que contiene funciones compartidas.</li>
+<li><code>here::here()</code> crea rutas relativas al proyecto, evitando rutas personales de Windows.</li>
+<li><code>file.exists()</code> verifica que el archivo exista.</li>
+<li><code>if()</code> solo ejecuta una instrucción si se cumple la condición.</li>
+<li><code>stop()</code> detiene con un mensaje explicativo si falta un requisito.</li>
+<li><code>readRDS()</code> recupera un objeto de R, en este caso una lista que contiene las tablas de la sesión anterior.</li>
+</ul>
+<h3>Paso 2: seleccionar los registros agrupados</h3>
+<pre><code class="language-r">datos &lt;- paquete_10$datos_agrupados
+nrow(datos)
+names(datos)
+</code></pre>
+<p><code>$</code> recupera un componente de la lista; <code>nrow()</code> cuenta filas; <code>names()</code> devuelve los nombres de las columnas. Compruebe que exista <code>grupo</code>, <code>edad_n</code>, <code>ingreso_n</code>, <code>zona_norm</code>, <code>educacion_norm</code> y <code>acceso_norm</code>.</p>
+<h3>Paso 3: calcular el número y porcentaje por perfil</h3>
+<pre><code class="language-r">tamanos &lt;- datos %&gt;%
+  dplyr::count(grupo, name = &quot;registros&quot;) %&gt;%
+  dplyr::mutate(
+    pct_de_agrupados = round(100 * registros / sum(registros), 1)
+  )
+print(tamanos)
+</code></pre>
+<p><code>%&gt;%</code> lleva una tabla a la siguiente función. <code>count()</code> agrupa y cuenta observaciones. <code>mutate()</code> agrega una columna sin borrar las existentes. <code>sum()</code> suma los registros de todos los grupos. <code>round(...,1)</code> redondea a un decimal; el porcentaje está referido a los registros <strong>que recibieron un grupo</strong>.</p>
+<h3>Paso 4: calcular la completitud de tres variables por grupo</h3>
+<pre><code class="language-r">variables_calidad &lt;- c(&quot;zona_norm&quot;, &quot;educacion_norm&quot;, &quot;acceso_norm&quot;)
+completitud &lt;- dplyr::bind_rows(lapply(variables_calidad, function(campo) {
+  datos %&gt;%
+    dplyr::group_by(grupo) %&gt;%
+    dplyr::summarise(registros = dplyr::n(),
+                     faltantes = sum(is.na(.data[[campo]])),
+                     .groups = &quot;drop&quot;) %&gt;%
+    dplyr::mutate(variable = campo,
+                  presentes = registros - faltantes,
+                  pct_completitud = round(100 * presentes / registros, 1))
+}))
+</code></pre>
+<ul>
+<li><code>c()</code> crea un vector de tres nombres.</li>
+<li><code>lapply()</code> repite una operación para cada nombre de variable.</li>
+<li><code>function(campo)</code> indica la acción que se repetirá; <code>campo</code> cambia en cada vuelta.</li>
+<li><code>group_by(grupo)</code> separa los cálculos para cada perfil.</li>
+<li><code>summarise()</code> produce una fila de resumen por grupo.</li>
+<li><code>n()</code> cuenta registros dentro del grupo.</li>
+<li><code>.data[[campo]]</code> indica «la columna cuyo nombre está guardado en <code>campo</code>».</li>
+<li><code>is.na()</code> identifica datos ausentes; <code>sum()</code> cuenta cuántos aparecen porque <code>TRUE</code> vale 1 en una suma lógica.</li>
+<li><code>bind_rows()</code> coloca las tablas de los tres campos una debajo de la otra.</li>
+</ul>
+<h3>Paso 5: registrar la cobertura y guardar resultados</h3>
+<pre><code class="language-r">cobertura &lt;- tibble::tibble(
+  filas_del_archivo = paquete_10$diagnostico$registros_totales,
+  filas_agrupadas = nrow(datos),
+  filas_excluidas = paquete_10$diagnostico$registros_excluidos
+)
+paquete_11_base &lt;- list(datos = datos, cobertura = cobertura,
+                        tamanos = tamanos, completitud = completitud)
+saveRDS(paquete_11_base, here::here(&quot;resultados&quot;, &quot;11_base_calidad.rds&quot;))
+</code></pre>
+<p><code>list()</code> reúne varios objetos bajo un único nombre. <code>tibble()</code> construye una tabla legible. <code>saveRDS()</code> guarda el paquete para no depender de variables temporales. El script completo añade el porcentaje de cobertura, controles y exporta los CSV.</p>
+<p><strong>Compruebe:</strong> deben existir <code>resultados/11_base_calidad.rds</code>, <code>resultados/tablas/11_tamanos_perfiles.csv</code> y <code>resultados/tablas/11_completitud_perfiles.csv</code>.</p>
+<h2>11.4. Script <code>11_01_estadistica_calidad_perfiles.R</code></h2>
+<p><strong>Objetivo:</strong> calcular estadísticas, detectar posibles extremos de ingreso, elaborar tres gráficos y guardar un RDS listo para Quarto.</p>
+<h3>Paso 1: leer el punto de control</h3>
+<pre><code class="language-r">source(here::here(&quot;R&quot;, &quot;00_configuracion.R&quot;))
+base &lt;- readRDS(here::here(&quot;resultados&quot;, &quot;11_base_calidad.rds&quot;))
+datos &lt;- base$datos
+</code></pre>
+<p>No necesita cargar manualmente los CSV: los datos ya están organizados en el RDS de la etapa anterior.</p>
+<h3>Paso 2: calcular medidas por grupo</h3>
+<pre><code class="language-r">estadisticas &lt;- datos %&gt;%
+  dplyr::group_by(grupo) %&gt;%
+  dplyr::summarise(
+    n = dplyr::n(),
+    ingreso_media = mean(ingreso_n),
+    ingreso_mediana = median(ingreso_n),
+    ingreso_sd = sd(ingreso_n),
+    ingreso_q1 = as.numeric(quantile(ingreso_n, 0.25)),
+    ingreso_q3 = as.numeric(quantile(ingreso_n, 0.75)),
+    .groups = &quot;drop&quot;
+  ) %&gt;%
+  dplyr::mutate(ingreso_iqr = ingreso_q3 - ingreso_q1)
+</code></pre>
+<ul>
+<li><code>mean()</code> calcula la media.</li>
+<li><code>median()</code> busca el valor central ordenado.</li>
+<li><code>sd()</code> resume dispersión de ingresos alrededor de la media.</li>
+<li><code>quantile(., 0.25)</code> y <code>quantile(., 0.75)</code> obtienen Q1 y Q3.</li>
+<li><code>as.numeric()</code> elimina atributos del resultado de <code>quantile()</code>.</li>
+<li><code>mutate()</code> calcula IQR como diferencia entre cuartiles.</li>
+</ul>
+<p>El script completo repite estas operaciones para edad, redondea la presentación y añade la diferencia entre media y mediana de ingresos.</p>
+<h3>Paso 3: obtener límites de revisión de ingresos</h3>
+<pre><code class="language-r">limites &lt;- datos %&gt;%
+  dplyr::group_by(grupo) %&gt;%
+  dplyr::summarise(q1 = as.numeric(quantile(ingreso_n, 0.25)),
+                   q3 = as.numeric(quantile(ingreso_n, 0.75)),
+                   .groups = &quot;drop&quot;) %&gt;%
+  dplyr::mutate(iqr = q3 - q1,
+                limite_inferior = pmax(0, q1 - 1.5 * iqr),
+                limite_superior = q3 + 1.5 * iqr)
+</code></pre>
+<p><code>pmax(0, ...)</code> impide que el límite inferior sea negativo: los ingresos válidos seleccionados son no negativos. Este ajuste es específico del ejercicio y debe explicarse en el informe.</p>
+<h3>Paso 4: relacionar límites y observaciones</h3>
+<pre><code class="language-r">revisados &lt;- datos %&gt;%
+  dplyr::left_join(limites, by = &quot;grupo&quot;) %&gt;%
+  dplyr::mutate(
+    candidato_atipico = ingreso_n &lt; limite_inferior |
+                        ingreso_n &gt; limite_superior
+  )
+</code></pre>
+<p><code>left_join()</code> agrega los límites a cada fila a partir del grupo, conservando las observaciones de la tabla izquierda. <code>|</code> significa «o». La nueva columna es <code>TRUE</code> cuando un ingreso queda fuera de los límites. <strong>No se cambia ningún ingreso ni se elimina una fila.</strong></p>
+<h3>Paso 5: contar los candidatos a revisión</h3>
+<pre><code class="language-r">resumen_atipicos &lt;- revisados %&gt;%
+  dplyr::group_by(grupo) %&gt;%
+  dplyr::summarise(n = dplyr::n(),
+                   candidatos = sum(candidato_atipico),
+                   pct_candidatos = round(100 * candidatos / n, 1),
+                   .groups = &quot;drop&quot;)
+</code></pre>
+<p>Esta tabla muestra tanto las cantidades absolutas como sus denominadores. Una tasa mayor puede deberse a una distribución naturalmente muy dispersa: no implica automáticamente que ese perfil tenga datos inválidos.</p>
+<h3>Paso 6: crear los tres gráficos</h3>
+<p>El script completo construye:</p>
+<ol>
+<li><strong>Barras de tamaños:</strong> <code>ggplot()</code> inicia el gráfico, <code>aes()</code> asigna ejes, <code>geom_col()</code> dibuja barras cuyo alto ya contiene el conteo.</li>
+<li><strong>Diagrama de caja:</strong> <code>geom_boxplot()</code> representa mediana, caja Q1–Q3, bigotes y puntos fuera del criterio gráfico.</li>
+<li><strong>Mapa de calor de completitud:</strong> <code>geom_tile()</code> usa celdas para cruzar grupos y variables; <code>geom_text()</code> muestra el porcentaje dentro de cada celda.</li>
+</ol>
+<p><code>ggsave()</code> guarda cada figura en <code>resultados/figuras/</code> para que Quarto pueda incluirla directamente.</p>
+<h3>Paso 7: crear <code>11_calidad_perfiles.rds</code></h3>
+<pre><code class="language-r">paquete &lt;- list(
+  tablas = list(estadisticas = estadisticas,
+                atipicos = resumen_atipicos,
+                completitud = base$completitud),
+  cobertura = base$cobertura
+)
+saveRDS(paquete, here::here(&quot;resultados&quot;, &quot;11_calidad_perfiles.rds&quot;))
+</code></pre>
+<p>El script completo también guarda metadatos, límites, detalles y rutas de figuras. No confunda <strong>CSV</strong> (tabla intercambiable) con <strong>RDS</strong> (objeto de R que puede contener varias tablas).</p>
+<p><strong>Resultados a comprobar:</strong> RDS, tabla de media/mediana/IQR por perfil, tabla de candidatos atípicos y tres gráficos.</p>
+<h2>11.5. Elaborar el informe <code>sesion_11_calidad_perfiles.qmd</code></h2>
+<p>Quarto reúne texto, tablas y gráficos. El documento queda guardado en <code>reportes/</code> y contiene:</p>
+<table>
+<thead>
+<tr>
+  <th>Sección</th>
+  <th>Contenido</th>
+  <th>De dónde vienen los datos</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>Portada</td>
+  <td>Título, autor y formatos HTML/Word</td>
+  <td>Encabezado YAML</td>
+</tr>
+<tr>
+  <td>Introducción</td>
+  <td>Qué se evaluó y qué limitaciones hay</td>
+  <td>Texto del participante</td>
+</tr>
+<tr>
+  <td>Objetivos</td>
+  <td>Completitud, dispersión y revisión de extremos</td>
+  <td>Texto del participante</td>
+</tr>
+<tr>
+  <td>Metodología</td>
+  <td>Grupos de sesión 10 y cobertura</td>
+  <td><code>paquete$cobertura</code></td>
+</tr>
+<tr>
+  <td>Tamaños</td>
+  <td>Tabla y gráfico de frecuencias</td>
+  <td><code>paquete$tablas$tamanos</code></td>
+</tr>
+<tr>
+  <td>Estadísticos</td>
+  <td>Media, mediana, desviación y cuartiles</td>
+  <td><code>paquete$tablas$estadisticas</code></td>
+</tr>
+<tr>
+  <td>Completitud</td>
+  <td>Matriz de valores presentes por grupo</td>
+  <td><code>paquete$tablas$completitud</code></td>
+</tr>
+<tr>
+  <td>Atípicos</td>
+  <td>Tabla de candidatos</td>
+  <td><code>paquete$tablas$atipicos</code></td>
+</tr>
+<tr>
+  <td>Interpretación</td>
+  <td>Conclusiones descriptivas</td>
+  <td>Cálculos y observaciones propias</td>
+</tr>
+</tbody>
+</table>
+<h3>Encabezado YAML</h3>
+<pre><code class="language-yaml">---
+title: &quot;Sesión 11 | Estadística de calidad de los perfiles&quot;
+lang: es
+format:
+  html:
+    toc: true
+  docx:
+    toc: true
+---
+</code></pre>
+<p><code>---</code> abre y cierra el encabezado. <code>title</code> configura título, <code>lang</code> selecciona español y <code>format</code> declara las salidas. <code>toc: true</code> genera una tabla de contenidos.</p>
+<h3>Primer bloque: leer el RDS</h3>
+<pre><code class="language-markdown">```{r}
+#| label: cargar-rds
+paquete &lt;- readRDS(here::here(&quot;resultados&quot;, &quot;11_calidad_perfiles.rds&quot;))
+```
+</code></pre>
+<h3>Tabla de estadísticos</h3>
+<pre><code class="language-markdown">```{r}
+#| label: tabla-estadisticos
+knitr::kable(paquete$tablas$estadisticas,
+             caption = &quot;Estadísticos de los perfiles&quot;)
+```
+</code></pre>
+<p><code>kable()</code> crea una tabla presentable tanto en HTML como en Word. La tabla se genera desde los resultados del RDS, no escribiendo cifras manuales.</p>
+<h3>Incorporar un gráfico</h3>
+<pre><code class="language-markdown">```{r}
+#| label: grafico-completitud
+knitr::include_graphics(
+  here::here(&quot;resultados&quot;, &quot;figuras&quot;, &quot;11_completitud_por_perfil.png&quot;)
+)
+```
+</code></pre>
+<p><code>include_graphics()</code> incorpora una figura previamente guardada. Al regenerar los gráficos, la nueva imagen puede incorporarse sin editar el informe.</p>
+<h2>11.6. Script <code>11_02_renderizar_reporte.R</code></h2>
+<pre><code class="language-r">source(here::here(&quot;R&quot;, &quot;00_configuracion.R&quot;))
+qmd &lt;- here::here(&quot;reportes&quot;, &quot;sesion_11_calidad_perfiles.qmd&quot;)
+cli &lt;- Sys.which(&quot;quarto&quot;)
+for (formato in c(&quot;html&quot;, &quot;docx&quot;)) {
+  estado &lt;- system2(cli,
+    args = c(&quot;render&quot;, shQuote(qmd), &quot;--to&quot;, formato))
+  if (estado != 0L) stop(&quot;Error al generar &quot;, formato)
+}
+</code></pre>
+<ul>
+<li><code>Sys.which(&quot;quarto&quot;)</code> localiza Quarto CLI.</li>
+<li><code>for()</code> repite el proceso para HTML y Word.</li>
+<li><code>system2()</code> ejecuta un comando del sistema desde R.</li>
+<li><code>shQuote()</code> protege rutas que contienen espacios.</li>
+<li><code>stop()</code> detiene si el renderizado devuelve error.</li>
+</ul>
+<p><strong>Verifique</strong> los archivos <code>reportes/sesion_11_calidad_perfiles.html</code> y <code>reportes/sesion_11_calidad_perfiles.docx</code>.</p>
+<p><strong>Errores frecuentes:</strong> si no existe el RDS, ejecute 11_00 y 11_01; si faltan PNG, ejecute 11_01; si Quarto no está en PATH, instale Quarto y reinicie RStudio. Un comando <code>quarto render ...</code> se ejecuta en <strong>Terminal</strong>, no escrito directamente en la <strong>Console de R</strong>.</p>
+<h2>11.7. Actividad de cierre</h2>
+<p>Redacte al menos una observación sobre tamaño de grupos, una sobre diferencias entre media y mediana, otra sobre completitud y una sobre los posibles ingresos atípicos. Explique por qué una variación en las estadísticas no demuestra diferencias causales ni significa error confirmado.</p>
+<hr />
+<h1>Orden exacto y entregables finales</h1>
+<h2>Desde la consola RStudio</h2>
+<pre><code class="language-r"># Sesión 10 (se conservan archivos y procedimientos)
+source(here::here(&quot;R&quot;, &quot;10_00_preparar_datos_perfiles.R&quot;))
+source(here::here(&quot;R&quot;, &quot;10_01_identificar_perfiles.R&quot;))
+source(here::here(&quot;R&quot;, &quot;10_02_renderizar_reporte.R&quot;))
+
+# Sesión 11 (nueva estadística de calidad)
+source(here::here(&quot;R&quot;, &quot;11_00_evaluar_completitud_perfiles.R&quot;))
+source(here::here(&quot;R&quot;, &quot;11_01_estadistica_calidad_perfiles.R&quot;))
+source(here::here(&quot;R&quot;, &quot;11_02_renderizar_reporte.R&quot;))
+</code></pre>
+<h2>Productos que debe entregar cada participante</h2>
+<table>
+<thead>
+<tr>
+  <th>Sesión</th>
+  <th>Entregables</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>10</td>
+  <td>Script de preparación, script K-means, <code>10_perfiles.rds</code>, tablas, dos PNG e informe Quarto HTML (Word opcional)</td>
+</tr>
+<tr>
+  <td>11</td>
+  <td>Scripts de completitud y estadísticos, <code>11_calidad_perfiles.rds</code>, cuatro tablas CSV, tres PNG e informe Quarto HTML (Word opcional)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Regla metodológica:</strong> las medidas se calculan con datos sintéticos y no autorizan correcciones automáticas ni conclusiones sobre Ecuador.</p>
+</main></body></html>
